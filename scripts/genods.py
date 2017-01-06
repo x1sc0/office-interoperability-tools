@@ -288,6 +288,7 @@ def getRsltTable(testType):
             p = P(stylename=tablecontents,text=unicode(c,PWENC))
             tc.addElement(p)
 
+    index = 0
     for testcase in values.keys():
 
         try:
@@ -298,6 +299,7 @@ def getRsltTable(testType):
         except KeyError:
             # In case a testcase is in the first csv but not in the second one
             continue
+        index += 1
 
         #identify regressions and progressions
         progreg='x'
@@ -443,6 +445,16 @@ def getRsltTable(testType):
                         p = P(stylename=tagColStyle,text=unicode(c,PWENC))
                 tr.addElement(tc)
                 tc.addElement(p)
+
+    tr = TableRow()
+    table.addElement(tr)
+    tr = TableRow()
+    table.addElement(tr)
+    tc = TableCell()
+    tr.addElement(tc)
+    p = P(stylename=tablecontents,text=unicode("Total compared bugs: %s"%str(index),PWENC))
+    tc.addElement(p)
+
     return table
 
 progdesc='Derive some results from pdf tests'
