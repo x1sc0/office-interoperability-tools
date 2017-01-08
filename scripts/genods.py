@@ -288,7 +288,10 @@ def getRsltTable(testType):
             p = P(stylename=tablecontents,text=unicode(c,PWENC))
             tc.addElement(p)
 
-    index = 0
+    total = 0
+    totalRegressions = 0
+    totalEmpty = 0
+    totalTimeOut = 0
     for testcase in values.keys():
 
         try:
@@ -299,7 +302,7 @@ def getRsltTable(testType):
         except KeyError:
             # In case a testcase is in the first csv but not in the second one
             continue
-        index += 1
+        total += 1
 
         #identify regressions and progressions
         progreg='x'
@@ -313,6 +316,13 @@ def getRsltTable(testType):
         if int(progreg) >= 0 and not np.array_equal(agrades[0], [7,7,7,7]) \
                 and not np.array_equal(agrades[0], [6,6,6,6]):
             continue
+
+        if int(progreg) < 0:
+            totalRegressions += 1
+        elif np.array_equal(agrades[0], [6,6,6,6]):
+            totalEmpty += 1
+        elif np.array_equal(agrades[0], [7,7,7,7]):
+            totalTimeOut += 1
 
         #testcase=testcase.split('/')[1]
         tr = TableRow()
@@ -452,7 +462,28 @@ def getRsltTable(testType):
     table.addElement(tr)
     tc = TableCell()
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Total compared bugs: %s"%str(index),PWENC))
+    p = P(stylename=tablecontents,text=unicode("Total compared bugs: %s"%str(total),PWENC))
+    tc.addElement(p)
+
+    tr = TableRow()
+    table.addElement(tr)
+    tc = TableCell()
+    tr.addElement(tc)
+    p = P(stylename=tablecontents,text=unicode("Total number of regressions: %s"%str(totalRegressions),PWENC))
+    tc.addElement(p)
+
+    tr = TableRow()
+    table.addElement(tr)
+    tc = TableCell()
+    tr.addElement(tc)
+    p = P(stylename=tablecontents,text=unicode("Total number of empty files: %s"%str(totalEmpty),PWENC))
+    tc.addElement(p)
+
+    tr = TableRow()
+    table.addElement(tr)
+    tc = TableCell()
+    tr.addElement(tc)
+    p = P(stylename=tablecontents,text=unicode("Total number of Timeouts: %s"%str(totalTimeOut),PWENC))
     tc.addElement(p)
 
     return table
