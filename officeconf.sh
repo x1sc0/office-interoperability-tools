@@ -271,6 +271,19 @@ then
 	printLO52WIN() { $LO52WINPROG --headless --convert-to pdf $1 &> /dev/null; }
 fi
 
+if [ -x "$LO53PROG" ]
+then
+	canconvertLO53=1	# we can convert from source type to target types
+	canprintLO53=1		# we can print to pdf
+	#usage: convLO53 docx file.odf #converts the given file to docx
+    verLO53() { $LO53PROG --version | awk '{print $3;}' | xargs echo -n; }
+	convLO53() { $LO53PROG --headless --convert-to $1 $2 &> /dev/null; }
+	sourceLO53() { echo "odt"; }
+	targetLO53() { echo "rtf docx doc"; }
+	#usage: printLO53 pdf file.rtf #prints the given file to pdf
+	printLO53() { $LO53PROG --headless --convert-to pdf $1 &> /dev/null; }
+fi
+
 if [ -x "$LOMASTERPROG" ]
 then
 	canconvertLOMASTER=1	# we can convert from source type to target types
