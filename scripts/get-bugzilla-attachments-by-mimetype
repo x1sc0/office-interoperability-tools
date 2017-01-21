@@ -32,7 +32,6 @@ import os, os.path
 import stat
 import sys
 import threading
-import signal
 try:
     import queue
 except:
@@ -60,7 +59,6 @@ def urlopen_retry(url):
             print("retrying...")
 
 def get_from_bug_url_via_xml(url, mimetype, prefix, suffix):
-    global index
     id = url.rsplit('=', 2)[1]
     print("id is " + prefix + id + " " + suffix)
     print("parsing " + id)
@@ -69,14 +67,9 @@ def get_from_bug_url_via_xml(url, mimetype, prefix, suffix):
     sock.close()
     attachmentid=0
     for attachment in dom.getElementsByTagName('attachment'):
-        if index >= nDocuments:
-            break
         attachmentid += 1
         print(" mimetype is", end=' ')
         for node in attachment.childNodes:
-            if index >= nDocuments:
-                break
-
             if node.nodeName == 'type':
                 print(node.firstChild.nodeValue, end=' ')
                 if node.firstChild.nodeValue.lower() != mimetype.lower():
@@ -99,7 +92,7 @@ def get_from_bug_url_via_xml(url, mimetype, prefix, suffix):
                     if os.path.isfile(fdodownload):
                         print("assuming FDO " + fdodownload + " is up to date")
                         continue
-                index += 1
+
                 print('downloading as ' + download)
                 tmpfile = download + ".tmp"
                 f = open(tmpfile, 'wb')
@@ -109,7 +102,6 @@ def get_from_bug_url_via_xml(url, mimetype, prefix, suffix):
                 break
 
 def get_novell_bug_via_xml(url, mimetype, prefix, suffix):
-    global index
     id = url.rsplit('=', 2)[1]
     print("id is " + prefix + id + " " + suffix)
     print("parsing " + id)
@@ -118,8 +110,6 @@ def get_novell_bug_via_xml(url, mimetype, prefix, suffix):
     sock.close()
     attachmentid=0
     for comment in dom.getElementsByTagName('thetext'):
-        if index >= nDocuments:
-            break
         commentText = comment.firstChild.nodeValue
         match = re.search(r".*Created an attachment \(id=([0-9]+)\)", commentText)
         if not match:
@@ -149,7 +139,6 @@ def get_novell_bug_via_xml(url, mimetype, prefix, suffix):
             print("skipping")
             continue
 
-        index += 1
         print('downloading as ' + download)
         tmpfile = download + ".tmp"
         f = open(tmpfile, 'wb')
@@ -251,8 +240,6 @@ def get_through_rss_query(queryurl, mimetype, prefix, suffix):
 
         for entry in entries:
             try:
-                if index >= nDocuments:
-                    break
                 get_bug_function(entry['id'], mimetype, prefix, suffix)
             except KeyboardInterrupt:
                 raise # Ctrl+C should work
@@ -307,7 +294,6 @@ launchpad_pkgs = (
 )
 
 def get_launchpad_bugs(prefix):
-    global index
     #launchpadlib python module is required to download launchpad attachments
     from launchpadlib.launchpad import Launchpad
 
@@ -319,15 +305,11 @@ def get_launchpad_bugs(prefix):
         pkgbugs = srcpkg.searchTasks(status=["New", "Fix Committed", "Invalid", "Won't Fix", "Confirmed", "Triaged", "In Progress", "Incomplete", "Incomplete (with response)", "Incomplete (without response)", "Fix Released", "Opinion", "Expired"])
 
         for bugtask in pkgbugs:
-            if index >= nDocuments:
-                break
             bug = bugtask.bug
             id = str(bug.id)
             print("parsing " + id + " status: " + bugtask.status + " title: " + bug.title[:50])
             attachmentid = 0
             for attachment in bug.attachments:
-                if index >= nDocuments:
-                    break
                 attachmentid += 1
                 handle = attachment.data.open()
                 if not handle.content_type in mimetypes:
@@ -347,7 +329,6 @@ def get_launchpad_bugs(prefix):
                     print("assuming " + id + " is up to date")
                     break
 
-                index += 1
                 print('mimetype is ' + handle.content_type + ' downloading as ' + download)
 
                 tmpfile = download + ".tmp"
@@ -600,8 +581,7 @@ def generate_multi_threading():
         print("DONE with bugtracker " + prefix)
 
 max_threads = 20 # Number of threads to create, (1 = without multi-threading)
-index = 0
-nDocuments = 100
+
 jobs = queue.Queue()
 
 if len(sys.argv) > 1:
@@ -613,15 +593,7 @@ if len(sys.argv) > 1:
         mimetypes = powerpoint
     else:
         print("First argument needs to be \'word\' or \'powerpoint\'")
-        sys.exit()
-    
-    if len(sys.argv) > 2:
-        try:
-            nDocuments = int(sys.argv[2])
-        except ValueError:
-            print("Second argument needs to be an integer")
-            sys.exit()
-               
+        sys.exit()               
 else:
     print("At least one argument is needed")
     sys.exit()
