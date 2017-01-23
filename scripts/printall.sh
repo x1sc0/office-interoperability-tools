@@ -25,6 +25,12 @@ function killWINEOFFICE() {
 exit 1
 }
 
+if ! xset q &>/dev/null; then
+    echo "No X server. Simulating one..."
+    export DISPLAY=:0.0
+    Xvfb :0 -screen 0 1024x768x16 &
+fi
+
 let canprint=canprint$sourceapp
 if [ $canprint -eq 1 ] 
 then
