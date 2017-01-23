@@ -20,6 +20,12 @@ export rtripapps="LOMASTER"
 # reference application to be used for printing
 export sourceapp="MSWINE"	# MS Office running under Wine on Linux
 
+if ! xset q &>/dev/null; then
+    echo "No X server."
+    echo "Please use 'ssh -Y' to connect to the server."
+    exit 1
+fi
+
 ../../scripts/convall.sh
 ../../scripts/printall.sh
 ../../scripts/compareall.sh
