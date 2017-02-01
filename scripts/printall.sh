@@ -45,42 +45,33 @@ then
 
 
 	for ifmt in $iformat; do
-		for ofmt in $oformat; do
-			if [ $ofmt != $ifmt ]; then
-				printfmt=$ofmt
-				ext=$ofmt
-			else
-				printfmt=pdf
-				ext=$ifmt.$printfmt
-			fi
-			for i in `find $sourcedir -name \*.$ifmt`; do
-				(
-				dir=`dirname $i`
-				ofile=${i/.$ifmt/.$ext}
-				ofile=${ofile/$dir/$sourceapp}
-				auxoutput=${i/.$ifmt/.$printfmt}
-				if [ ! -e "$ofile" ] || [ "$ofile" -ot "$ifile" ];
-				then
-					# keep type to enable processing of multiple formats
+		for i in `find $sourcedir -name \*.$ifmt`; do
+			(
+			dir=`dirname $i`
+			ofile=${i/.$ifmt/.pdf}
+			ofile=${ofile/$dir/$sourceapp}
+			auxoutput=${i/.$ifmt/.pdf}
+			if [ ! -e "$ofile" ] || [ "$ofile" -ot "$ifile" ];
+			then
+				# keep type to enable processing of multiple formats
 
-					echo Printing $i to $ofile
-					print$sourceapp $printfmt $i &>/dev/null
-					if [ ! -e $auxoutput ];
-					then
-						killWINEOFFICE
-						# delete in the case it is there from the previous test
-						# missing file will be in report indicated by grade 7
-						echo Failed to create $auxoutput
-					else
-						mv $auxoutput $ofile
-					fi
+				echo Printing $i to $ofile
+				print$sourceapp pdf $i &>/dev/null
+				if [ ! -e $auxoutput ];
+				then
+					killWINEOFFICE
+					# delete in the case it is there from the previous test
+					# missing file will be in report indicated by grade 7
+					echo Failed to create $auxoutput
+				else
+					mv $auxoutput $ofile
 				fi
-				)
-			done
+			fi
+			)
 		done
 	done
 
-	for a in $sourceapp $rtripapps; do
+	for a in $rtripapps; do
 		echo Printing in $a
         apptype=`echo $a|cut -b -2`
 	    if [ $apptype == "LO" -o $apptype == "AO" -o $apptype == "OO" -o $apptype == "BB" ]
