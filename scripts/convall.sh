@@ -45,13 +45,15 @@ for rtapp in `echo $rtripapps`; do
 					# input: orig/bullets.doc
 					# output: LO52/bullets.doc.LO52.pdf
 
-					if [ ! -e "$ofile2" ] || [ "$ofile2" -ot "$ifile" ]; then
-						if ! timeout 60s $FTPATH/scripts/doconv.sh -f pdf -a $rtapp -i $ifile -o $ofile2; then
-							echo Timeout Reached
-						fi
-					#else
-						#echo "$ofile is up to date"
-					fi
+                    if [ $ofmt == $ifmt ]; then
+					    if [ ! -e "$ofile2" ] || [ "$ofile2" -ot "$ifile" ]; then
+						    if ! timeout 90s $FTPATH/scripts/doconv.sh -f pdf -a $rtapp -i $ifile -o $ofile2; then
+							    echo Timeout Reached
+						    fi
+					    #else
+						    #echo "$ofile is up to date"
+					    fi
+                    fi
 				done
 			done
 		done
