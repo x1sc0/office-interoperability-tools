@@ -21,31 +21,23 @@ function cmp ()
 	#echo 1 $1
 	refpdf=`basename $1` 	#source document with suffix
     refpdf=${refpdf//$2.}   #Remove $app from file name
-	refpdfn=`basename $refpdf .pdf`	#source document without suffix
+	refpdf=`basename $refpdf .pdf`	#source document without suffix
+    for ofmt in $oformat; do
+        refpdf=`basename $refpdf .$ofmt `
+    done
 	ddd=`dirname $1`
 	subdir=${ddd/\.\//}	# nice subdir path
 	spdf=$sourceapp/$subdir/$refpdf	#source document with nice path
-	tpdf=$4/$subdir/$refpdfn	#target document with nice path without suffix
-	
-	if [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
+	tpdf=$4/$subdir/$1
+
+	if [ ! -e "${spdf}.pdf" ] || [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
 	then
-		echo $3 - Creating pairs for  $tpdf
-		time timeout 120s  docompare.py -t $threshold -d $dpi -a -o $tpdf-pair $spdf $tpdf.pdf 2>/dev/null
+		echo $3 - Creating pairs for  $tpdf and $spdf.pdf
+		time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $tpdf-pair $spdf.pdf $tpdf 2>/dev/null
 
 	    if [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
 	    then
             rm /tmp/*.tif
-        fi
-
-        if [ ! -e "${tpdf}.$2-pair-l.pdf" ] || [ "${tpdf}.$2-pair-l.pdf" -ot "$spdf" ];
-        then
-	        echo $3 - Creating pairs for  $tpdf.$2
-	        time timeout 120s docompare.py -t $threshold -d $dpi -a -o $tpdf.$2-pair $spdf $tpdf.$2.pdf 2>/dev/null
-
-            if [ ! -e "${tpdf}.$2-pair-l.pdf" ] || [ "${tpdf}.$2-pair-l.pdf" -ot "$spdf" ];
-            then
-                rm /tmp/*.tif
-            fi
         fi
 	fi
 }
