@@ -63,13 +63,20 @@ for a in $rtripapps; do
     echo $line > $folder/all.csv
 
     # get names of pdf files from
-    for dir in $sourcedir $sourceapp; do
+    for dir in $folder $sourcedir; do
         filenames=""
         cd $dir
-        for fmt in $oformat; do
-            aux=`find . -name \*.$fmt -printf '%P\n'`
-            filenames="$aux $filenames"
-        done
+        if [ $dir == $sourcedir ]; then
+            for fmt in $iformat; do
+                aux=`find . -name \*.$fmt -printf '%P\n'`
+                filenames="$aux $filenames"
+            done
+        else
+            for fmt in $oformat; do
+                aux=`find . -name \*.$fmt -printf '%P\n'`
+                filenames="$aux $filenames"
+            done
+        fi
         cd ..
 
         #get one file with results go get the header
@@ -86,23 +93,32 @@ for a in $rtripapps; do
             refpdfn=`basename $f`	#source document without suffix
             ddd=`dirname $f`
             subdir=${ddd/\.\//}	# get nice subdir path
-            #line="$subdir/$refpdfn"	# first line item - file name without suffix
             if [ $ddd == "." ]; then
-	            line="$dir/$refpdfn"	# first line item - file name without suffix
+                if [ $dir == $folder ]; then
+                    line=$refpdfn
+                else
+	                line="$dir/$refpdfn"	# first line item - file name without suffix
+                fi
             else
-	            line="$dir/$subdir/$refpdfn"	# first line item - file name without suffix
+                if [ $dir == $folder ]; then
+                    line=$refpdfn
+                else
+	                line="$dir/$subdir/$refpdfn"	# first line item - file name without suffix
+                fi
             fi
 
-            #the roundtrip file
-            rsltpdf=$folder/$subdir/$refpdfn-pair-l.pdf
-            #echo $rsltpdf
-            getvalues $rsltpdf
-            line="$line, $retval"
-            #the printed file
-            rsltpdf=$folder/$subdir/$refpdfn.$folder-pair-l.pdf
-            #echo $rsltpdf
-            getvalues $rsltpdf
-            line="$line, $retval"
+
+            if [ $dir == $folder ]; then
+                #the roundtrip file
+                rsltpdf=$folder/$subdir/$refpdfn.pdf-pair-l.pdf
+                getvalues $rsltpdf
+                line="$line, $retval"
+            else
+                #the printed file
+                rsltpdf=$folder/$subdir/$refpdfn.$a.pdf-pair-l.pdf
+                getvalues $rsltpdf
+                line="$line,,,,,,$retval"
+            fi
 
             echo $line >> $folder/all.csv
         done

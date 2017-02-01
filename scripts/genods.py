@@ -296,6 +296,9 @@ def getRsltTable(testType):
 
         try:
             agrades = np.array([valToGrade(values[testcase][a][1:]) for a in targetAppsSel])
+            if np.array_equal(agrades[0], [6,6,6,6]):
+                continue
+
             lastgrade=agrades[-1]
             maxgrade=agrades.max(axis=0)
             mingrade=agrades.min(axis=0)
@@ -313,9 +316,8 @@ def getRsltTable(testType):
         else:
             progreg=str(sum(lastgrade-maxgrade))
 
-        if int(progreg) >= 0 and not np.array_equal(agrades[0], [7,7,7,7]) \
-                and not np.array_equal(agrades[0], [6,6,6,6]):
-            continue
+        '''if int(progreg) >= 0 and not np.array_equal(agrades[0], [7,7,7,7]):
+            continue'''
 
         if int(progreg) < 0:
             totalRegressions += 1
@@ -331,6 +333,7 @@ def getRsltTable(testType):
         tr.addElement(tc)
         #p = P(stylename=tablecontents,text=unicode(testcase,PWENC))
         p = P(stylename=tablecontents,text=unicode("",PWENC))
+        #TODO: Fix doc link in roundtrip
         link = A(type="simple",href="%s%s"%(lpath,testcase), text=testcase)
         p.addElement(link)
         tc.addElement(p)
@@ -369,9 +372,10 @@ def getRsltTable(testType):
             filename=testcase.split("/",1)[-1]  # get subdirectories, too
             
             if ttype=="roundtrip":
-                pdfpath=app+"/"+filename+"-pair"
+                pdfpath=app+"/"+filename+".pdf-pair"
             else:
-                pdfpath=app+"/"+filename+"."+subapp+"-pair"
+                pdfpath=app+"/"+filename+"."+subapp+".pdf-pair"
+
             pdfPathInDoc = lpath + pdfpath
             for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value
                 if max(grades) > 1:
