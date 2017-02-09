@@ -351,24 +351,8 @@ rss_bugzillas = (
     # does not add it back immediately .-)
     # 'novell': 'https://bugzilla.novell.com/buglist.cgi',
     ( 'ooo', 'https://bz.apache.org/ooo/buglist.cgi' ),
-)
-'''
-    ( 'abi', 'http://bugzilla.abisource.com/buglist.cgi' ), #added for abiword
-    ( 'fdo', 'http://bugs.freedesktop.org/buglist.cgi' ),
-    ( 'gentoo', 'http://bugs.gentoo.org/buglist.cgi' ),
-    ( 'gnome', 'http://bugzilla.gnome.org/buglist.cgi' ), # added for gnumeric
-    ( 'kde', 'http://bugs.kde.org/buglist.cgi' ), # added for koffice/calligra
-    ( 'mandriva', 'https://qa.mandriva.com/buglist.cgi' ),
-    ( 'moz', 'https://bugzilla.mozilla.org/buglist.cgi' ),
-    # It seems something has changed and it is no longer possible to
-    # download any files from there.
-    # NOTE: I am leaving it in the list, commented out, just so someone
-    # does not add it back immediately .-)
-    # 'novell': 'https://bugzilla.novell.com/buglist.cgi',
-    ( 'ooo', 'https://bz.apache.org/ooo/buglist.cgi' ),
     ( 'tdf', 'http://bugs.documentfoundation.org/buglist.cgi' ),
 )
-'''
 
 redhatrpc = 'https://bugzilla.redhat.com/xmlrpc.cgi'
 redhatbug = 'https://bugzilla.redhat.com/show_bug.cgi?id='
