@@ -201,7 +201,7 @@ then
 	canconvertLO44=1	# we can convert from source type to target types
 	canprintLO44=1		# we can print to pdf
 	#usage: convLO44 docx file.odf #converts the given file to docx
-    verLO44() { $LOMASTERPROG --version | awk '{print $3;}' | xargs echo -n; }
+    verLO44() { $LO44PROG --version | awk '{print $3;}' | xargs echo -n; }
 	convLO44() { $LO44PROG --headless --convert-to $1 $2 &> /dev/null; }
 	sourceLO44() { echo "odt"; }
 	targetLO44() { echo "rtf docx doc"; }
@@ -214,7 +214,7 @@ then
 	canconvertLO50=1	# we can convert from source type to target types
 	canprintLO50=1		# we can print to pdf
 	#usage: convLO50 docx file.odf #converts the given file to docx
-    verLO50() { $LOMASTERPROG --version | awk '{print $3;}' | xargs echo -n; }
+    verLO50() { $LO50PROG --version | awk '{print $3;}' | xargs echo -n; }
 	convLO50() { $LO50PROG --headless --convert-to $1 $2 &> /dev/null; }
 	sourceLO50() { echo "odt"; }
 	targetLO50() { echo "rtf docx doc"; }
@@ -227,6 +227,7 @@ then
 	canconvertLO51=1	# we can convert from source type to target types
 	canprintLO51=1		# we can print to pdf
 	#usage: convLO51 docx file.odf #converts the given file to docx
+    verLO51() { $LO51PROG --version | awk '{print $3;}' | xargs echo -n; }
 	convLO51() { $LO51PROG --headless --convert-to $1 $2 &> /dev/null; }
 	sourceLO51() { echo "odt"; }
 	targetLO51() { echo "rtf docx doc"; }
