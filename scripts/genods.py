@@ -319,6 +319,15 @@ def getRsltTable(testType):
         if int(progreg) >= -1 and not np.array_equal(agrades[0], [7,7,7,7]):
             continue
 
+        name = testcase.split("/",1)[-1].split(".")[0]
+
+        if testType == "print":
+            lImportReg.append(name)
+        elif testType == "roundtrip":
+            print(lImportReg)
+            if name in lImportReg:
+                continue
+
         if int(progreg) < 0:
             totalRegressions += 1
         elif np.array_equal(agrades[0], [6,6,6,6]):
@@ -636,6 +645,7 @@ textdoc.styles.addElement(rankCellStyle)
 
 goodDocuments = []
 badDocuments = []
+lImportReg = []
 table = getRsltTable("print")
 textdoc.spreadsheet.addElement(table)
 table = getRsltTable("roundtrip")
