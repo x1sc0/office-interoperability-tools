@@ -324,8 +324,9 @@ def getRsltTable(testType):
         if testType == "print":
             lImportReg.append(name)
         elif testType == "roundtrip":
-            if name in lImportReg:
+            if name in lImportReg or name in lExportReg:
                 continue
+            lExportReg.append(name)
 
         if int(progreg) < 0:
             totalRegressions += 1
@@ -645,6 +646,7 @@ textdoc.styles.addElement(rankCellStyle)
 goodDocuments = []
 badDocuments = []
 lImportReg = []
+lExportReg = []
 table = getRsltTable("print")
 textdoc.spreadsheet.addElement(table)
 table = getRsltTable("roundtrip")
