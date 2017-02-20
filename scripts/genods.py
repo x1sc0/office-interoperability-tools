@@ -316,8 +316,8 @@ def getRsltTable(testType):
         else:
             progreg=str(sum(lastgrade-maxgrade))
 
-        '''if int(progreg) >= 0 and not np.array_equal(agrades[0], [7,7,7,7]):
-            continue'''
+        if int(progreg) >= -1 and not np.array_equal(agrades[0], [7,7,7,7]):
+            continue
 
         if int(progreg) < 0:
             totalRegressions += 1
