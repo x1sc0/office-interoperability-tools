@@ -324,7 +324,6 @@ def getRsltTable(testType):
         if testType == "print":
             lImportReg.append(name)
         elif testType == "roundtrip":
-            print(lImportReg)
             if name in lImportReg:
                 continue
 
