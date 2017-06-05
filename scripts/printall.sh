@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -o xtrace #be verbose
 
-. $FTPATH/officeconf.sh 
+. $FTPATH/officeconf.sh
 checkLO
 
 
@@ -32,7 +32,7 @@ if ! xset q &>/dev/null; then
 fi
 
 let canprint=canprint$sourceapp
-if [ $canprint -eq 1 ] 
+if [ $canprint -eq 1 ]
 then
 
 	if [ ! -d "$sourceapp" ]; then
@@ -59,10 +59,10 @@ then
 				print$sourceapp pdf $i &>/dev/null
 				if [ ! -e $auxoutput ];
 				then
+					echo Failed to create $auxoutput
 					killWINEOFFICE
 					# delete in the case it is there from the previous test
 					# missing file will be in report indicated by grade 7
-					echo Failed to create $auxoutput
 				else
 					mv $auxoutput $ofile
 				fi
@@ -97,10 +97,10 @@ then
 					#rename to contain $ofmt in file name
 					if [ ! -e $auxpdf ];
 					then
+						echo Failed to create $pdffile
 						killWINEOFFICE
 						# delete in the case it is there from the previous test
 						# missing file will be in report indicated by grade 7
-						echo Failed to create $pdffile
 						rm -f $pdffile
 					else
 						mv $auxpdf $pdffile
