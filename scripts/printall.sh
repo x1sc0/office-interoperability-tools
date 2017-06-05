@@ -59,7 +59,7 @@ then
 				print$sourceapp pdf $i &>/dev/null
 				if [ ! -e $auxoutput ];
 				then
-					echo Failed to create $auxoutput
+					echo Failed to create $ofile
 					killWINEOFFICE
 					# delete in the case it is there from the previous test
 					# missing file will be in report indicated by grade 7
