@@ -1,13 +1,13 @@
 #!/bin/bash
 #set -o xtrace #be verbose
-. $FTPATH/officeconf.sh 
+. $FTPATH/officeconf.sh
 
 checkLO
 
 for rtapp in `echo $rtripapps`; do
 	startOOoServer $rtapp
 	let canconvert=canconvert$rtapp
-	if [ $canconvert -eq 1 ] 
+	if [ $canconvert -eq 1 ]
 	then
 		echo Processing $rtapp
         folder=$rtapp'-'$(ver$rtapp)
@@ -24,7 +24,7 @@ for rtapp in `echo $rtripapps`; do
 			#echo xx $files
 			for ifile in $files; do
 				for ofmt in $oformat; do
-					ofile=${ifile/$ifmt/$ofmt}
+					ofile=${ifile/.$ifmt/.$ofmt}
 					ofile=${ofile/$sourcedir/$folder}
 					# convert to the same file type
 					# input: orig/bullets.doc
