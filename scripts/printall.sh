@@ -1,6 +1,8 @@
 #!/bin/bash
 #set -o xtrace #be verbose
 
+OfficeFormats="doc docx rtf ppt pptx"
+
 . $FTPATH/officeconf.sh
 checkLO
 
@@ -54,9 +56,8 @@ then
 			if [ ! -e "$ofile" ] || [ "$ofile" -ot "$ifile" ];
 			then
 				# keep type to enable processing of multiple formats
-
 				echo Printing $i to $ofile
-				print$sourceapp pdf $i &>/dev/null
+				print$sourceapp $i &>/dev/null
 				if [ ! -e $auxoutput ];
 				then
 					echo Failed to create $ofile
@@ -76,10 +77,10 @@ then
         apptype=`echo $a|cut -b -2`
 	    if [ $apptype == "LO" -o $apptype == "AO" -o $apptype == "OO" -o $apptype == "BB" ]
 	    then
-            a=$a'-'$(ver$a)
+            aVer=$a'-'$(ver$a)
         fi
 		for ofmt in $oformat; do
-			for i in `find $a -name \*.$ofmt`; do
+			for i in `find $aVer -name \*.$ofmt`; do
 				(
 				pdffile=$i.pdf
 				auxpdf=${i/.$ofmt/.pdf}
@@ -87,26 +88,31 @@ then
 				# files already have LO51 in their name, no renaming necessary
 				#if [ ! -e "$ofile" ];
 				then
-					echo Printing $i to $pdffile
-					# apps in general cannot create specific file but just $auxpdf
-					print$sourceapp pdf $i &>/dev/null
-					# convert to pdf
-					# input: orig/bullets.doc
-					# output: orig/bullets.doc.pdf
-					# output: LO52/bullets.doc.pdf
-					#rename to contain $ofmt in file name
-					if [ ! -e $auxpdf ];
-					then
-						echo Failed to create $pdffile
-						killWINEOFFICE
-						# delete in the case it is there from the previous test
-						# missing file will be in report indicated by grade 7
-						rm -f $pdffile
-					else
-						mv $auxpdf $pdffile
-					fi
-				#else
-					#echo "$ofile is up to date"
+                    echo Printing $i to $pdffile
+                    if [[ $OfficeFormats =~ $ofmt ]];
+                    then
+                        # apps in general cannot create specific file but just $auxpdf
+                        print$sourceapp $i &>/dev/null
+                        # convert to pdf
+                        # input: orig/bullets.doc
+                        # output: orig/bullets.doc.pdf
+                        # output: LO52/bullets.doc.pdf
+                        #rename to contain $ofmt in file name
+                        if [ ! -e $auxpdf ];
+                        then
+                            echo Failed to create $pdffile
+                            killWINEOFFICE
+                            # delete in the case it is there from the previous test
+                            # missing file will be in report indicated by grade 7
+                            rm -f $pdffile
+                        else
+                            mv $auxpdf $pdffile
+                        fi
+                    else
+                        if ! timeout 90s $FTPATH/scripts/doconv.sh -f pdf -a $a -i $i -o $pdffile; then
+                            echo Timeout Reached
+                        fi
+                    fi
 				fi
 				)
 			done
