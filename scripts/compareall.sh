@@ -49,7 +49,7 @@ eval set -- "$TEMP"
 # extract options and their arguments into variables.
 while true ; do
     case "$1" in
-        -h|--help) 
+        -h|--help)
 		usage; exit 1;;
 	-g)
 		shift
@@ -70,9 +70,9 @@ shift $(expr $OPTIND - 1 )
 # file names: bullets.docx.pdf
 
 
-if [[ $# -gt 0 ]] 
+if [[ $# -gt 0 ]]
 then
-	while test $# -gt 0; 
+	while test $# -gt 0;
 	do
 		if [ -d "$1" ]; then
   			echo Processing $1
@@ -86,13 +86,21 @@ then
 	done
 else
 	for app in `echo $rtripapps`; do
-  		echo Processing $app
-		#for pdfdoc in $pdfs; do cmp `basename $pdfdoc` $app; done
+        for ofmt in $oformat; do
+            echo Processing *.$ofmt.pdf in $app
+            folder=$app'-'$(ver$app)
+            cd $folder
+            pdfs=`find . -name \*.$ofmt.pdf | grep -v pair | sort -n -k 1.7,1.9`
+            cd ..
+            count=0
+            for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
+        done
+        echo Processing *.$app.pdf in $app
         folder=$app'-'$(ver$app)
         cd $folder
-        pdfs=`find . -name \*.pdf|grep -v pair|sort -n -k 1.7,1.9`
+        pdfs=`find . -name \*.$app.pdf | grep -v pair | sort -n -k 1.7,1.9`
         cd ..
-		count=0
-		for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
-	done
+        count=0
+        for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
+    done
 fi
