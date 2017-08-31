@@ -6,7 +6,7 @@
 # Licensed under the GNU LGPL v3 - http://www.gnu.org/licenses/gpl.html
 # - or any later version.
 #
-import sys, os, getopt 
+import sys, os, getopt
 import csv
 import numpy as np
 
@@ -88,21 +88,21 @@ def loadCSV(csvfile):
                 values = {}
                 cnt = 0
                 for row in reader:
-                        if(reader.line_num == 1): 
+                        if(reader.line_num == 1):
                             apps=[]
                             for i in range(len(row)):
                                 if row[i] != '': apps.append(row[i])
                             apps = apps[1:]
-                        elif(reader.line_num == 2): 
+                        elif(reader.line_num == 2):
                             labels=row[1:vcnt+1]
-                        elif(reader.line_num > 2): 
+                        elif(reader.line_num > 2):
                             d={}
                             for i in range(len(apps)):
                                 d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
                             values[row[0]] = d
                         cnt +=1
                         #if cnt > 100: break
-        return apps, labels, values 
+        return apps, labels, values
 
 def loadRanks(csvfile):
         """ Load ranking
@@ -128,12 +128,12 @@ def loadTags(csvfile):
                     if len(row) > 0: values.add(row[0])
         return values
 
-#testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND'] 
+#testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
 def valToGrade(data):
         """ get grade for individual observed measures
         """
 	if not data or not data[0] or data[0] == ' ':
-            return [6,6,6,6]
+            return np.array([])
 
         global FDEMax, HLPEMax, THEMax, LNDMax
         if data[-1] == "empty":
@@ -210,7 +210,7 @@ def getRsltTable(testType):
     table.addElement(TableColumn(stylename=tagColStyle))
     table.addElement(TableColumn(stylename=tagColStyle))
     table.addElement(TableColumn(stylename=tagColStyle))
-    
+
     #First row: application names
     tr = TableRow()
     table.addElement(tr)
@@ -225,7 +225,7 @@ def getRsltTable(testType):
     tc = TableCell() #empty cell
     tr.addElement(tc)
     appcolumns=len(testLabels)
-    for a in targetAppsSel: 
+    for a in targetAppsSel:
         print a
         tc = TableCell(numbercolumnsspanned=2*(appcolumns-1), stylename="THstyle")
         tr.addElement(tc)
@@ -263,7 +263,7 @@ def getRsltTable(testType):
     p = P(stylename=tablecontents,text=unicode("Sum all",PWENC))
     tc.addElement(p)
     tc.addElement(addAnn("Sum of grades for all tested versions"))
-    for a in targetAppsSel: 
+    for a in targetAppsSel:
         for tl in range(1, len(testLabelsShort)):   # we do not show the PPOI value
             tc = TableCell(numbercolumnsspanned=2,stylename="THstyle")
             tr.addElement(tc)
@@ -296,7 +296,7 @@ def getRsltTable(testType):
 
         try:
             agrades = np.array([valToGrade(values[testcase][a][1:]) for a in targetAppsSel])
-            if np.array_equal(agrades[0], [6,6,6,6]):
+            if agrades.size == 0:
                 continue
 
             lastgrade=agrades[-1]
@@ -367,7 +367,7 @@ def getRsltTable(testType):
         tc = TableCell(valuetype="float", value=str(allsum))
         tr.addElement(tc)
 
-        for a in targetAppsSel: 
+        for a in targetAppsSel:
             grades = valToGrade(values[testcase][a][1:])
             #grades = values[testcase][a][1:]
             #for val in values[testcase][a][1:]:   # we do not show the PPOI value
@@ -375,11 +375,11 @@ def getRsltTable(testType):
             viewTypes=['s','p','l','z']
             app, ttype = a.split()
             subapp = app.split('-')[0]
-            
+
             #create pdf path
             #ipdb.set_trace()
             filename=testcase.split("/",1)[-1]  # get subdirectories, too
-            
+
             if ttype=="roundtrip":
                 pdfpath=app+"/"+filename+".pdf-pair"
             else:
@@ -444,9 +444,9 @@ def getRsltTable(testType):
             tc = TableCell(valuetype="float", value=str("%.3f"%float(rankinfo[0])), stylename=rankCellStyle)
             tr.addElement(tc)
             for c in rankinfo[1:]:
-                if testType == "print": 
+                if testType == "print":
                     if tagsp:
-                        if c in tagsp: 
+                        if c in tagsp:
                             tc = TableCell(stylename="C1style")
                             p = P(stylename=C1,text=unicode(c,PWENC))
                         else:
@@ -457,7 +457,7 @@ def getRsltTable(testType):
                         p = P(stylename=tagColStyle,text=unicode(c,PWENC))
                 if testType == "roundtrip":
                     if tagsr:
-                        if c in tagsr: 
+                        if c in tagsr:
                             tc = TableCell(stylename="C1style")
                             p = P(stylename=C1,text=unicode(c,PWENC))
                         else:
@@ -513,18 +513,18 @@ rfname= None
 tm1roundtrip= None
 tm1print= None
 
-# we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference'] 
-testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND'] 
+# we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
+testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
 testAnnotation = {
-        'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally", 
+        'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally",
         'HLPE': "Horiz. Line Position Error / overlay of lines aligned only verically",
-        'THE': "Text Height Error / page overlay with no alignment", 
+        'THE': "Text Height Error / page overlay with no alignment",
         'LND': "Line Number Difference / side by side view"
         }
 
 
 FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
-HLPEMax = (0.01,5,10,15,20)        # 
+HLPEMax = (0.01,5,10,15,20)        #
 THEMax = (0.01,2, 4, 6,8)
 LNDMax = (0.01,0.01,0.01,0.01,0.01)
 lpath = '../'
@@ -654,4 +654,4 @@ textdoc.spreadsheet.addElement(table)
 #table = getRsltTable("all", False)
 #textdoc.spreadsheet.addElement(table)
 textdoc.save(ofname)
-    
+
