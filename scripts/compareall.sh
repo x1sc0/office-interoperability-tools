@@ -34,10 +34,11 @@ function cmp ()
 	then
 		echo $3 - Creating pairs for  $tpdf and $spdf.pdf
 		time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $tpdf-pair $spdf.pdf $tpdf
+        echo
 
 	    if [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
 	    then
-            rm /tmp/*.tif
+            rm /tmp/*.tif 2>/dev/null
         fi
 	fi
 }

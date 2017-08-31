@@ -653,8 +653,10 @@ def mainfunc():
 
         if not (img2 != img2[0,0,0]).any() or not (img1 != img1[0,0,0]).any():
             if not (img1 != img1[0,0,0]).any():
+                msg= "Source pdf '%s' is empty, nothing to test"%(Names[0])
                 rsltText = "-:0:-:0:-:0:-:0:-:0"  #dummy result string 10 dashes necessary
             else:
+                msg = "Target pdf '%s' is empty, test failed"%(Names[1])
                 rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
             raise DoException(msg)
 
@@ -708,9 +710,8 @@ def mainfunc():
             sys.exit(1)
 
     except DoException, e:
-        sys.stderr.write(e.what+" ("+Names[0]+", "+Names[1]+")\n")
-        #print e.what+" ("+Names[0]+", "+Names[1]+")"
-        sys.exit(125)
+        print("\n" + e.what + " (" + Names[0] + ", " + Names[1] + ")")
+        sys.exit(0)
 
 if __name__=="__main__":
     mainfunc()
