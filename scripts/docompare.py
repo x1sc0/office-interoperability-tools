@@ -121,21 +121,21 @@ def pdf2array(pdffile, res=300):
     return pages, shapes
 
 def makeSingle(pages, shapes):
-        ''' merge pages to one image'''
-        height=0
-        width=0
+    ''' merge pages to one image'''
+    height=0
+    width=0
 
-        for s in shapes:
-            height += s[0]
-            width = max(width, s[1])
-        #bigpage = np.zeros((height,width,3), dtype=pages[0].dtype)
-        # white backgroud, in ordet to ignore page width differences within a document
-        bigpage = 255*np.ones((height,width,3), dtype=pages[0].dtype)
-        pos=0
-        for p, s in zip(pages, shapes):
-            bigpage[pos:pos+s[0],0:s[1],:]=p[0:s[0],0:s[1],:]
-            pos += s[0]
-        return bigpage
+    for s in shapes:
+        height += s[0]
+        width = max(width, s[1])
+    #bigpage = np.zeros((height,width,3), dtype=pages[0].dtype)
+    # white backgroud, in ordet to ignore page width differences within a document
+    bigpage = 255*np.ones((height,width,3), dtype=pages[0].dtype)
+    pos=0
+    for p, s in zip(pages, shapes):
+        bigpage[pos:pos+s[0],0:s[1],:]=p[0:s[0],0:s[1],:]
+        pos += s[0]
+    return bigpage
 
 def getPagePixelOverlayIndex(iarray1, iarray2):
     """
@@ -334,27 +334,27 @@ def lineIndexPage(iarray0, iarray1):
     vh_page = np.zeros((outheight, iarray0.shape[1], 3), dtype=np.uint8)
     vh_page[:] = 1
 
-        # create page of horizontally aligned lines
+    # create page of horizontally aligned lines
     ar=ystart0    #the actual row
     for i in range(min(len(tx0),len(tx1))):
-            #we cut  vh_lines[i] from right, if it is too long
-            awidth= vh_lines[i].shape[1]
-            if xstart0+vh_lines[i].shape[1] > vh_page.shape[1]:
-                awidth = vh_page.shape[1] - xstart0
-            vh_page[ar:ar+vh_lines[i].shape[0],xstart0:xstart0+vh_lines[i].shape[1]] = vh_lines[i][:,:awidth,:]
-            if i < len(sp0):
-                ar += vh_lines[i].shape[0] + sp0[i][1]
-            else:
-                ar += vh_lines[i].shape[0]
+        #we cut  vh_lines[i] from right, if it is too long
+        awidth= vh_lines[i].shape[1]
+        if xstart0+vh_lines[i].shape[1] > vh_page.shape[1]:
+            awidth = vh_page.shape[1] - xstart0
+        vh_page[ar:ar+vh_lines[i].shape[0],xstart0:xstart0+vh_lines[i].shape[1]] = vh_lines[i][:,:awidth,:]
+        if i < len(sp0):
+            ar += vh_lines[i].shape[0] + sp0[i][1]
+        else:
+            ar += vh_lines[i].shape[0]
 
     #create a page view to display vertically adjusted overlays, taking line spaces from the source (first) page
-        # height of the output page: sum of overlayed blobs + sum of spaces from image 1
+    # height of the output page: sum of overlayed blobs + sum of spaces from image 1
     outheight = ystart0 + sum([b.shape[0] for b in v_lines])+ sum(np.array(sp0)[:,1]) + (iarray0.shape[0] - ystop0) + 10
-        #outheight = ystart0 + sum([b.shape[0] for b in v_lines])+ sum(np.array(sp0)[:,1])
+    #outheight = ystart0 + sum([b.shape[0] for b in v_lines])+ sum(np.array(sp0)[:,1])
     v_page = np.zeros((outheight, iarray0.shape[1], 3), dtype=np.uint8)
     v_page[:] = 1
 
-        # create page of the original lines from iarray1
+    # create page of the original lines from iarray1
     ar=ystart0    #the actual row
     for i in range(min(len(tx0),len(tx1))):
         #we cut  vh_lines[i] from right, if it is too long
