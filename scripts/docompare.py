@@ -651,13 +651,30 @@ def mainfunc():
         img1 = makeSingle(pages1, shapes1)
         img2 = makeSingle(pages2, shapes2)
 
-        if not (img2 != img2[0,0,0]).any() or not (img1 != img1[0,0,0]).any():
-            if not (img1 != img1[0,0,0]).any():
-                msg= "Source pdf '%s' is empty, nothing to test"%(Names[0])
+        msg = ''
+        if not (img1 != img1[0,0,0]).any():
+            if not (img2 != img2[0,0,0]).any():
+                msg= "Source and Target pdfs '%s' are empty, nothing to test"%(Names[0])
                 rsltText = "-:0:-:0:-:0:-:0:-:0"  #dummy result string 10 dashes necessary
+                outimg = genoverlay(toBin(img1,binthr), msg, Names[0], Names[1], "")
             else:
-                msg = "Target pdf '%s' is empty, test failed"%(Names[1])
+                msg= "Source pdf '%s' is empty, Target pdf not, nothing to test"%(Names[0])
                 rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+                outimg = genoverlay(toBin(img2,binthr), msg, Names[0], Names[1], "")
+        elif not (img2 != img2[0,0,0]).any():
+            msg = "Target pdf '%s' is empty, test failed"%(Names[1])
+            rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+            outimg = genoverlay(toBin(img1,binthr), msg, Names[0], Names[1], "")
+
+        if msg:
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-p.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-p.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-l.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-l.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-z.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-z.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-s.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-s.pdf'))
             raise DoException(msg)
 
         #crop to common size
