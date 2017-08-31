@@ -132,7 +132,9 @@ def loadTags(csvfile):
 def valToGrade(data):
         """ get grade for individual observed measures
         """
-	if not data or not data[0] or data[0] == ' ':
+
+        #if checking roundtrip, print is ['', '', '', '', ''] or viceversa
+	if not data or  '' in data:
             return np.array([])
 
         global FDEMax, HLPEMax, THEMax, LNDMax
