@@ -24,14 +24,14 @@ from collections import defaultdict
 
 PWENC = "utf-8"
 
-progdesc='Derive some results from pdf tests'
-
 def usage(desc):
-    print sys.argv[0]+':',  desc, ofname, ifNameNew, ifNameOld, rfname, tm1roundtrip, tm1print
+    print sys.argv[0]+':'
     print "Usage: ", sys.argv[0], "[options]"
     print "\t--new all.csv ... ..... report"
     print "\t--old all.csv ... ..... report"
     print "\t--output outfile.odt ........ report {default: "+ofname+"}"
+    print "\t--regression ....... Only display the regressions"
+    print "\t--improvement ....... Only display the improvements"
     print "\t-r rankfile.csv ....... document ranking"
     print "\t-t tagMax1-roundtrip.csv . document tags"
     print "\t-n tagMax1-print.csv ..... document tags"
@@ -42,9 +42,10 @@ def usage(desc):
     print "\t-h .................... this usage"
 
 def parsecmd(desc):
-    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip
+    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements
+
     try:
-        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output='])
+        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output=', 'regression', 'improvement'])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -60,6 +61,10 @@ def parsecmd(desc):
             ofname = a
         elif o == "--new":
             ifNameNew = a
+        elif o == "--regression":
+            checkRegressions = True
+        elif o == "--improvement":
+            checkImprovements = True
         elif o == "--old":
             ifNameOld = a
         elif o in ("-t"):
@@ -318,17 +323,24 @@ def getRsltTable(testType):
         else:
             progreg=str(sum(lastgrade-maxgrade))
 
-        if int(progreg) >= -1 and not np.array_equal(agrades[0], [7,7,7,7]):
+        if checkRegressions and int(progreg) >= -1:
+            continue
+
+        #Looking for improvements, we only care about fdo bugs
+        if checkImprovements and ( int(progreg) < 1 or \
+                not re.search('fdo[0-9]*-[0-9].', testcase)):
             continue
 
         name = testcase.split("/",1)[-1].split(".")[0]
 
-        if testType == "print":
-            lImportReg.append(name)
-        elif testType == "roundtrip":
-            if name in lImportReg or name in lExportReg:
-                continue
-            lExportReg.append(name)
+        #Avoid showing import regressions as export regressions
+        if checkRegressions:
+            if testType == "print":
+                lImportReg.append(name)
+            elif testType == "roundtrip":
+                if name in lImportReg or name in lExportReg:
+                    continue
+                lExportReg.append(name)
 
         if int(progreg) < 0:
             totalRegressions += 1
@@ -519,17 +531,19 @@ def getRsltTable(testType):
 
     return table
 
-progdesc='Derive some results from pdf tests'
+progdesc = 'Derive some results from pdf tests'
 verbose = False
-useapps=None
-showalllinks=True
+useapps = None
+showalllinks = True
 
-ifNameNew= ""
-ifNameOld= ""
-ofname= "rslt.ods"
-rfname= None
-tm1roundtrip= None
-tm1print= None
+ifNameNew = ""
+ifNameOld = ""
+ofname = "rslt.ods"
+rfname = None
+tm1roundtrip = None
+tm1print = None
+checkRegressions = False
+checkImprovements = False
 
 # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
 testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
