@@ -139,7 +139,7 @@ def valToGrade(data):
         """ get grade for individual observed measures
         """
         #if checking roundtrip, print is ['', '', '', '', ''] or viceversa
-	if not data or  '' in data:
+        if not data or  '' in data or data[-1] == 'timeout':
             return [8,8,8,8]
 
         global FDEMax, HLPEMax, THEMax, LNDMax
@@ -305,7 +305,6 @@ def getRsltTable(testType):
             agrades = np.array([valToGrade(values[testcase][a][1:]) for a in targetAppsSel])
             if np.array_equal(agrades[0], [8,8,8,8]):
                 continue
-
             lastgrade=agrades[-1]
             maxgrade=agrades.max(axis=0)
             mingrade=agrades.min(axis=0)

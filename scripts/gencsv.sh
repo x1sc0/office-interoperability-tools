@@ -89,7 +89,7 @@ for a in $rtripapps; do
 
         for f in $filenames;
         do
-            #refpdfn=`basename $f .$format`	#source document without suffix
+            retval=",,,,timeout"
             refpdfn=`basename $f`	#source document without suffix
             ddd=`dirname $f`
             subdir=${ddd/\.\//}	# get nice subdir path
