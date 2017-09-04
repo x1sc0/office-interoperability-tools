@@ -327,6 +327,7 @@ def getRsltTable(testType):
             continue
 
         #Looking for improvements, we only care about fdo bugs
+        #TODO: Check against bugzilla if the bug is open
         if checkImprovements and ( int(progreg) < 1 or \
                 not re.search('fdo[0-9]*-[0-9].', testcase)):
             continue
