@@ -357,6 +357,9 @@ def getRsltTable(testType):
         elif re.search('moz[0-9]*-[0-9].', testcase):
             ref = 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + str(testcase.split('moz')[1].split('-')[0])
             link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('gentoo[0-9]*-[0-9].', testcase):
+            ref = 'https://bugs.gentoo.org/show_bug.cgi?id=' + str(testcase.split('gentoo')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
         else:
             link = A(type="simple",href="%s%s"%(lpath,testcase), text=testcase)
         p.addElement(link)
