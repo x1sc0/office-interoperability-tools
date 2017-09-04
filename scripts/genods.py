@@ -27,11 +27,11 @@ PWENC = "utf-8"
 progdesc='Derive some results from pdf tests'
 
 def usage(desc):
-    print sys.argv[0]+':',  desc, ofname, ifname, ifname2, rfname, tm1roundtrip, tm1print
+    print sys.argv[0]+':',  desc, ofname, ifNameNew, ifNameOld, rfname, tm1roundtrip, tm1print
     print "Usage: ", sys.argv[0], "[options]"
-    print "\t-1 infile.csv ... ..... report {default: "+ifname+"}"
-    print "\t-2 infile.csv ... ..... report {default: "+ifname2+"}"
-    print "\t-o outfile.csv ........ report {default: "+ofname+"}"
+    print "\t--new all.csv ... ..... report"
+    print "\t--old all.csv ... ..... report"
+    print "\t--output outfile.odt ........ report {default: "+ofname+"}"
     print "\t-r rankfile.csv ....... document ranking"
     print "\t-t tagMax1-roundtrip.csv . document tags"
     print "\t-n tagMax1-print.csv ..... document tags"
@@ -42,9 +42,9 @@ def usage(desc):
     print "\t-h .................... this usage"
 
 def parsecmd(desc):
-    global verbose, useapps, ofname, ifname, ifname2, lpath, rfname, showalllinks, tm1print, tm1roundtrip
+    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip
     try:
-        opts, Names = getopt.getopt(sys.argv[1:], "hvl:o:a:p:r:1:2:t:n:", ["help", "verbose"])
+        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output='])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -56,12 +56,12 @@ def parsecmd(desc):
         elif o in ("-h", "--help"):
             usage(desc)
             sys.exit()
-        elif o in ("-o"):
+        elif o == "--output":
             ofname = a
-        elif o in ("-1"):
-            ifname = a
-        elif o in ("-2"):
-            ifname2 = a
+        elif o == "--new":
+            ifNameNew = a
+        elif o == "--old":
+            ifNameOld = a
         elif o in ("-t"):
              tm1roundtrip= a
         elif o in ("-n"):
@@ -524,9 +524,9 @@ verbose = False
 useapps=None
 showalllinks=True
 
-ifname= 'all.csv'
-ifname2= 'all.csv'
-ofname= 'rslt.ods'
+ifNameNew= ""
+ifNameOld= ""
+ofname= "rslt.ods"
 rfname= None
 tm1roundtrip= None
 tm1print= None
@@ -550,8 +550,8 @@ lpath = '../'
 
 parsecmd(progdesc)
 if lpath[-1] != '/': lpath = lpath+'/'
-targetApps, testLabels, values = loadCSV(ifname)
-targetApps2, testLabels2, values2 = loadCSV(ifname2)
+targetApps, testLabels, values = loadCSV(ifNameNew)
+targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
 targetApps = targetApps + targetApps2
 testLabels = testLabels + testLabels2
 

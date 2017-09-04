@@ -8,7 +8,7 @@ function usage
 	echo "$0: Extract test results from the pair view files " 1>&2
 	echo "Usage: $0 [switches] " 1>&2
 	echo "Switches:" 1>&2
-	echo "    -o ................ file to saved output (views and information) {default: $outname}" 1>&2 
+	echo "    -o ................ file to saved output (views and information) {default: $outname}" 1>&2
 	echo "    -h --help ......... this usage" 1>&2
 	exit 1
 }
