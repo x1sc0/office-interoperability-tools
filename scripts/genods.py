@@ -132,10 +132,9 @@ def loadTags(csvfile):
 def valToGrade(data):
         """ get grade for individual observed measures
         """
-
         #if checking roundtrip, print is ['', '', '', '', ''] or viceversa
 	if not data or  '' in data:
-            return np.array([])
+            return [8,8,8,8]
 
         global FDEMax, HLPEMax, THEMax, LNDMax
         if data[-1] == "empty":
@@ -298,7 +297,7 @@ def getRsltTable(testType):
 
         try:
             agrades = np.array([valToGrade(values[testcase][a][1:]) for a in targetAppsSel])
-            if agrades.size == 0:
+            if np.array_equal(agrades[0], [8,8,8,8]):
                 continue
 
             lastgrade=agrades[-1]
