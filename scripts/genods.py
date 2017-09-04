@@ -9,6 +9,7 @@
 import sys, os, getopt
 import csv
 import numpy as np
+import re
 
 try:
     import ipdb
@@ -344,7 +345,20 @@ def getRsltTable(testType):
         #p = P(stylename=tablecontents,text=unicode(testcase,PWENC))
         p = P(stylename=tablecontents,text=unicode("",PWENC))
         #TODO: Fix doc link in roundtrip
-        link = A(type="simple",href="%s%s"%(lpath,testcase), text=testcase)
+        if re.search('fdo[0-9]*-[0-9].', testcase):
+            ref = 'https://bugs.documentfoundation.org/show_bug.cgi?id=' + str(testcase.split('fdo')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('abi[0-9]*-[0-9].', testcase):
+            ref = 'https://bugzilla.abisource.com/show_bug.cgi?id=' + str(testcase.split('abi')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('kde[0-9]*-[0-9].', testcase):
+            ref = 'https://bugs.kde.org/show_bug.cgi?id=' + str(testcase.split('kde')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('moz[0-9]*-[0-9].', testcase):
+            ref = 'https://bugzilla.mozilla.org/show_bug.cgi?id=' + str(testcase.split('moz')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
+        else:
+            link = A(type="simple",href="%s%s"%(lpath,testcase), text=testcase)
         p.addElement(link)
         tc.addElement(p)
 
