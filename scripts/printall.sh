@@ -6,6 +6,13 @@ OfficeFormats="doc docx rtf ppt pptx"
 . $FTPATH/officeconf.sh
 checkLO
 
+line="$(date) - Running printall.sh"
+if [ ! -e ./log ]; then
+    echo > ./log
+else
+    echo >> ./log
+fi
+echo $line >> ./log
 
 # trap ctrl-c and call ctrl_c()
 trap killWINEOFFICE INT
@@ -73,6 +80,7 @@ then
 	done
 
 	for a in $rtripapps; do
+        echo $(date) - Printing in $a >> ./log
 		echo Printing in $a
         apptype=`echo $a|cut -b -2`
 	    if [ $apptype == "LO" -o $apptype == "AO" -o $apptype == "OO" -o $apptype == "BB" ]

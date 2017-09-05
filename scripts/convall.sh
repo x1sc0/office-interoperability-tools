@@ -4,11 +4,21 @@
 
 checkLO
 
+line="$(date) - Running convall.sh"
+if [ ! -e ./log ]; then
+    echo > ./log
+else
+    echo >> ./log
+fi
+echo $line >> ./log
+
+
 for rtapp in `echo $rtripapps`; do
 	startOOoServer $rtapp
 	let canconvert=canconvert$rtapp
 	if [ $canconvert -eq 1 ]
 	then
+        echo $(date) - Processing $rtapp >> ./log
 		echo Processing $rtapp
         folder=$rtapp'-'$(ver$rtapp)
 		#create directory if it does not exit

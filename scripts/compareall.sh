@@ -3,6 +3,14 @@
 
 . $FTPATH/officeconf.sh
 
+line="$(date) - Running compareall.sh"
+if [ ! -e ./log ]; then
+    echo > ./log
+else
+    echo >> ./log
+fi
+echo $line >> ./log
+
 dpi=400		#dpi to render pdfs
 threshold=166	#threshold to identify foreground
 
@@ -76,6 +84,7 @@ then
 	while test $# -gt 0;
 	do
 		if [ -d "$1" ]; then
+            echo $(date) - Processing $1 >> ./log
   			echo Processing $1
 			#for pdfdoc in $pdfs; do cmp `basename $pdfdoc` $1; done
 			count=0
@@ -88,6 +97,7 @@ then
 else
 	for app in `echo $rtripapps`; do
         for ofmt in $oformat; do
+            echo $(date) - Processing *.$ofmt.pdf in $app >> ./log
             echo Processing *.$ofmt.pdf in $app
             folder=$app'-'$(ver$app)
             cd $folder
@@ -96,6 +106,7 @@ else
             count=0
             for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
         done
+        echo $(date) - Processing *.$app.pdf in $app >> ./log
         echo Processing *.$app.pdf in $app
         folder=$app'-'$(ver$app)
         cd $folder

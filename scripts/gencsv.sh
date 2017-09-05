@@ -3,6 +3,15 @@
 
 . $FTPATH/officeconf.sh
 
+
+line="$(date) - Running gencsv.sh"
+if [ ! -e ./log ]; then
+    echo > ./log
+else
+    echo >> ./log
+fi
+echo $line >> ./log
+
 function usage
 {
 	echo "$0: Extract test results from the pair view files " 1>&2
@@ -56,6 +65,7 @@ done
 
 #The first header line
 for a in $rtripapps; do
+    echo $(date) - Processing $a >> ./log
     echo "Processing $a" 1>&2
     line="File name,"
     folder=$a'-'$(ver$a)
