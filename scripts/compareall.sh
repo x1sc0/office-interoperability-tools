@@ -11,7 +11,7 @@ else
 fi
 echo $line >> ./log
 
-dpi=400		#dpi to render pdfs
+dpi=300		#dpi to render pdfs
 threshold=166	#threshold to identify foreground
 
 function usage
