@@ -22,6 +22,12 @@ from odf.table import Table, TableColumn, TableRow, TableCell
 from odf.office import Annotation
 from collections import defaultdict
 
+import requests
+import ast
+
+rest_url = 'https://bugs.documentfoundation.org/rest/bug?id='
+field = '&include_fields=id,status,summary'
+
 PWENC = "utf-8"
 
 def usage(desc):
@@ -86,6 +92,7 @@ def loadCSV(csvfile):
         """ Load the results
         Retuns: ID list of ints, ROI (array) of strings
         """
+        global fdoBugs
         # get information about the slices first
         vcnt=5  # we expect 5 error measures
         values = {}
@@ -106,6 +113,8 @@ def loadCSV(csvfile):
                             for i in range(len(apps)):
                                 d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
                             values[row[0]] = d
+                            if re.search('fdo[0-9]*-[0-9].', row[0]):
+                                fdoBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
                         cnt +=1
                         #if cnt > 100: break
         return apps, labels, values
@@ -183,7 +192,7 @@ def addAnnL(txtlist):
         return ann
 
 def getRsltTable(testType):
-    global ranks, showalllinks, useapps, tagsr, tagsp
+    global ranks, showalllinks, useapps, tagsr, tagsp, lFdoOpenImport, lFdoExport
     if testType == "all":
         aux=targetApps
     else:
@@ -326,9 +335,10 @@ def getRsltTable(testType):
             continue
 
         #Looking for improvements, we only care about fdo bugs
-        #TODO: Check against bugzilla if the bug is open
         if checkImprovements and ( int(progreg) < 1 or \
-                not re.search('fdo[0-9]*-[0-9].', testcase)):
+                not re.search('fdo[0-9]*-[0-9].', testcase) or \
+                (testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in lFdoOpenImport) or \
+                (testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in lFdoOpenExport)):
             continue
 
         name = testcase.split("/",1)[-1].split(".")[0]
@@ -562,12 +572,31 @@ LNDMax = (0.01,0.01,0.01,0.01,0.01)
 lpath = '../'
 #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
 
+fdoBugs = set()
+
 parsecmd(progdesc)
 if lpath[-1] != '/': lpath = lpath+'/'
 targetApps, testLabels, values = loadCSV(ifNameNew)
 targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
 targetApps = targetApps + targetApps2
 testLabels = testLabels + testLabels2
+
+fdoBugs = list(fdoBugs)
+
+fdoStatuses = []
+for i in range(0, len(fdoBugs), 500):
+    subList = fdoBugs[i: i + 500]
+    url = rest_url + ",".join(str(x) for x in subList) + field
+    fdoStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
+
+lFdoOpenImport = []
+lFdoOpenExport = []
+for item in fdoStatuses:
+    if item['status'] == 'NEW':
+        if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
+            lFdoOpenImport.append(str(item['id']))
+        elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
+            lFdoOpenExport.append(str(item['id']))
 
 result = defaultdict(dict)
 for d in values, values2:
