@@ -49,6 +49,9 @@ function killOOoServer()
 
 #kill WINWORD.EXE or POWERPNT.EXE in case they exist
 function killWINEOFFICE() {
+    echo "Closing the window... "
+    xdotool getwindowfocus windowkill
+
     if pgrep WINWORD.EXE > /dev/null; then
         echo "Killing WORD (WINWORD.EXE)"
         ps -ef | grep WINWORD.EXE | grep -v grep | awk '{print $2}' | xargs kill
