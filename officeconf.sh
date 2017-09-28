@@ -49,23 +49,22 @@ function killOOoServer()
 
 #kill WINWORD.EXE or POWERPNT.EXE in case they exist
 function killWINEOFFICE() {
-    echo "Closing the window... "
-    xdotool getwindowfocus windowkill
-
     if pgrep WINWORD.EXE > /dev/null; then
         echo "Killing WORD (WINWORD.EXE)"
-        ps -ef | grep WINWORD.EXE | grep -v grep | awk '{print $2}' | xargs kill
+        killall WINWORD.EXE
     fi
     if pgrep POWERPNT.EXE > /dev/null; then
-        sleep 5s
-        #powerpoint might take some seconds to export to pdf. wait 5 seconds
-        #before killing it
-        if pgrep POWERPNT.EXE > /dev/null; then
-            echo "Killing POWERPOINT (POWERPNT.EXE)"
-            ps -ef | grep POWERPNT.EXE | grep -v grep | awk '{print $2}' | xargs kill
-        fi
+        echo "Killing POWERPOINT (POWERPNT.EXE)"
+        killall POWERPNT.EXE
     fi
-exit 1
+
+    if pgrep winedbg > /dev/null; then
+        #Sometimes it's created but never closed.
+        #It causes X problems in the remote VM
+        echo "Killing winedbg"
+        killall winedbg
+    fi
+    exit 1
 }
 
 # Check if soffice is running
