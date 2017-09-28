@@ -1,7 +1,7 @@
 The goal of the office-interoperability-tools package is assessment of interoperability of various office applications using different office document formats.
- 
-The package has three parts: 
-1. Batch conversion and printing of test documents. For this, one needs the bash shell and an office program to be used in testing - the rest is included in the package. The office program must provide a command line interface. 
+
+The package has three parts:
+1. Batch conversion and printing of test documents. For this, one needs the bash shell and an office program to be used in testing - the rest is included in the package. The office program must provide a command line interface.
 Conversion and printing was tested on Linux and Windows
 
 2. Evaluation and reporting. For this one needs the bash shell, Python with some installed modules. This was tested on Linux.
@@ -16,27 +16,16 @@ Download the package and unpack it somewhere in the file system, or clone it dir
 Assume that name of this folder is OIT
 
 --------
-On Linux 
+On Linux
 --------
-Set environment variables which define applications to be tested on the current system by adding the following lines to the $HOME/.bashrc file.  Modify them according to the actual situation. Comment out unwanted options or add new ones:
+Set environment variables which define applications to be tested on the current system by adding the following lines to the config.sh file.  Modify them according to the actual situation. Comment out unwanted options or add new ones:
 
-# use full paths
-export FTPATH="$HOME/OIT"
-# to use Google Docs, you need your own key
-export GOOGLEDOC_PK_FILE="$HOME/.ssh/google-docs-privatekey.p12"
+export LOMASTERPROG="/home/xisco/libreoffice/instdir/program/soffice"
+export LO52PROG="/home/xisco/bibisect/bibisect-linux-64-5.3/instdir/program/soffice"
+export FTPATH="/home/xisco/office-interoperability-tools"
 export GDCONVERT="$FTPATH/gdconvert/gdconvert"
-export LO52PROG="/opt/libreoffice5.2/program/soffice"
-export LO51PROG="/opt/libreoffice5.1/program/soffice"
-export LO50PROG="/opt/libreoffice5.0/program/soffice"
-export LO44PROG="/opt/libreoffice4.4/program/soffice"
-export LO43PROG="/opt/libreoffice4.3/program/soffice"
-export LO42PROG="/opt/libreoffice4.2/program/soffice"
-export LO41PROG="/opt/libreoffice4.1/program/soffice"
-export LO40PROG="/opt/libreoffice4.0/program/soffice"
-export LO36PROG="/opt/libreoffice3.6/program/soffice"
-export LO35PROG="/opt/libreoffice3.5/program/soffice"
-export LO33PROG="/opt/libreoffice3.3/program/soffice"
 export WINEPROG="/usr/bin/wine"
+export WINEPREFIX="/home/xisco/.wineprefixes/msoffice2010/"
 
 #these are specific settings for OO/AO, which should be run in a server mode
 export OO33PORT=8133
@@ -56,13 +45,13 @@ export AO41PATH="/opt/openoffice41/program"
 export AWORDPROG="/usr/bin/abiword"
 export CWORDSPROG="/usr/bin/calligrawords"
 
-# required only for bisection of LO interoperability bugs 
+# required only for bisection of LO interoperability bugs
 export LO_BISECT_PATH="$HOME/LOBisect"
 
 ----------
 On Windows
 ----------
-Install bash from the CygWin package. 
+Install bash from the CygWin package.
 Include the following (or similar) to the .bashrc file:
 
 export FTPATH=/cygdrive/e/OIT
@@ -70,17 +59,17 @@ export MS13PROG=$FTPATH/OfficeConvert/OfficeConvert.exe
 
 Replace MS10 by MS07 or MS13 or anything else.
 You can use only one MSOffice program on one system.
-The OfficeConvert.exe program was taken from http://code.officeshots.org/trac/officeshots/browser/trunk/OfficeConvert. It was recompiled and support for one additional format was added. 
+The OfficeConvert.exe program was taken from http://code.officeshots.org/trac/officeshots/browser/trunk/OfficeConvert. It was recompiled and support for one additional format was added.
 
 Comment: LO is in Windows installed with path, where directory names contain spaces ("Program Files"). These scripts cannot work with such paths. Workaround: create link within the cygwin space, for example in your home:
 ls -s  /cygdrive/c/Program\ Files\ \(x86\)/LibreOffice\ 4/program/LibreOffice43
-and in .bashrc add 
+and in .bashrc add
 export LO43WIN=/home/xxx/LibreOffice43/soffice.exe
 
 Comment: If an application can directly print and convert files from a command line, it is listed there directly (LO41PROG), if not, a helper application is listed (AO34PROG, MS13PROG)
 
-Comment: In the tested setup, Windows was installed in a virtual machine with access to the Linux file system. 
-Thus, only one instance of software and test files existed, with different configuration files in each system. 
+Comment: In the tested setup, Windows was installed in a virtual machine with access to the Linux file system.
+Thus, only one instance of software and test files existed, with different configuration files in each system.
 This saved a lot of work and mess caused by eventual copying of files.
 
 ----------------------------------
@@ -89,10 +78,10 @@ Evaluation and creation of reports
 This part runs only on Linux (instructions for Ubuntu, Mint and similar):
 
 1. install the required tools by
-sudo apt-get install python-pip python-setuptools python-numpy python-scipy python-opencv python-ipdb libpython2.7-dev libjpeg-dev libjpeg-dev libz-dev libtiff5-dev libfreetype6-dev exiftool (maybe some others). Do not install python-tiffile 
+sudo apt-get install python-pip python-setuptools python-numpy python-scipy python-opencv python-ipdb libpython2.7-dev libjpeg-dev libjpeg-dev libz-dev libtiff5-dev libfreetype6-dev exiftool (maybe some others). Do not install python-tiffile
 2.  Enter OIT/scripts and run
 sudo python setup.py develop
-This will install also a few additional python packages 
+This will install also a few additional python packages
 
 -----
 SETUP
@@ -104,25 +93,27 @@ Modification is needed only if you add a new application.
 Testing
 -------
 
-The tests require a special folder structure, see the 'config.sh' script in the archives in folder 'roundtrip'
-
 To create a new test:
 1. create a a new subfolder in the roundtrip folder
 2. copy config.sh from another subfolder
 3. add test files
 
-A set of applications (rtripapps in config.sh) can be tested at once in respect to one source application 
+A set of applications (rtripapps in config.sh) can be tested at once in respect to one source application
 (sourceapp in config.sh)
 
 Names of the applications are specified in officeconf.sh
 
 Instructions how to run the necessary scripts can be found in comments of the config.sh files.
 The convall.sh script will run the 'rtripapps' applications, the printall.sh scrip will run the 'sourceapp' application.
-Both should be run on the corresponding system, the  convall.sh maybe on both (depending which applications are tested); 
+Both should be run on the corresponding system, the  convall.sh maybe on both (depending which applications are tested);
 
 WARNING: During conversion and printing no other instance of LO and AOO can run
 
-The remaining scripts should by run on Linux.
+The remaining scripts should be run on Linux.
+
+Running the script:
+
+bash run.sh
 
 -------
 Results
@@ -133,7 +124,7 @@ Meaning of grades can be found in column headers.
 
 The print test: Input file is printed by the tested application (LO) to pdf, which is subsequently compared to pdf printed by the source application (MSO).
 
-The roundtrip test: Input file is loaded by the tested application (LO) and stored in the same format. 
+The roundtrip test: Input file is loaded by the tested application (LO) and stored in the same format.
 This file is then opened by the source application (MSO) and printed to pdf.  These two pdfs are compared.
 
 Four different views are generated for each test:
@@ -142,7 +133,17 @@ Four different views are generated for each test:
 - page overlay with verically alignned lines (files xxx-l.pdf)
 - page overlay with verically and horizontally alignned lines (files xxx-z.pdf)
 
-One can open these files directly from the spreadsheed by clicking on cells with the ">" character.  
+One can open these files directly from the spreadsheed by clicking on cells with the ">" character.
+
+Running the script:
+
+Example: ../../scripts/genods.py --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt.ods
+
+If 'regression' flag is used, only the regressions will be displayed.
+Example: ../../scripts/genods.py --regression --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt19-09-2017regression.ods
+
+However, if 'improvement' flas is used, onlt the improvements will be displayed.
+Example: ../../scripts/genods.py --improvement --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt19-09-2017improvement.ods
 
 
 -------------
@@ -153,12 +154,12 @@ File roundtrip/gtagfreq.pickle contains information how often individual tags oc
 
 It can be used by the genods script to add this information to the report:
 1. Create ranks.csv file with list of used tags for each tested document by
-docxtags.py -r path_to/gtagfreq.pickle path_to/*.docx > ranks.csv 
+docxtags.py -r path_to/gtagfreq.pickle path_to/*.docx > ranks.csv
 2. Use it to create report:
 ../genods.py -i all.csv -o rslt.ods  -r rank.csv
 Information about the file rank (i.e. frequency of the least frequent tag in the document) and list of tags will be added at the end of each row. The tags are sorted by their decreasing occurence frequency.
 
- 
+
 -------------------
 Automated bisection
 -------------------
