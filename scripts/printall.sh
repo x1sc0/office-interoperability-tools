@@ -17,23 +17,6 @@ echo $line >> ./log
 # trap ctrl-c and call ctrl_c()
 trap killWINEOFFICE INT
 
-function killWINEOFFICE() {
-	if pgrep WINWORD.EXE > /dev/null; then
-		echo "Killing WORD (WINWORD.EXE)"
-		ps -ef | grep WINWORD.EXE | grep -v grep | awk '{print $2}' | xargs kill
-	fi
-	if pgrep POWERPNT.EXE > /dev/null; then
-		sleep 5s
-		#powerpoint might take some seconds to export to pdf. wait 5 seconds
-		#before killing it
-		if pgrep POWERPNT.EXE > /dev/null; then
-			echo "Killing POWERPOINT (POWERPNT.EXE)"
-			ps -ef | grep POWERPNT.EXE | grep -v grep | awk '{print $2}' | xargs kill
-		fi
-	fi
-exit 1
-}
-
 if ! xset q &>/dev/null; then
     echo "No X server. Simulating one..."
     export DISPLAY=:0.0
@@ -51,33 +34,6 @@ then
 			rm -f `find $sourceapp -name \*.$fmt`
 		done
 	fi
-
-
-	for ifmt in $iformat; do
-		for i in `find $sourcedir -name \*.$ifmt`; do
-			(
-			dir=`dirname $i`
-			ofile=${i/.$ifmt/.pdf}
-			ofile=${ofile/$dir/$sourceapp}
-			auxoutput=${i/.$ifmt/.pdf}
-			if [ ! -e "$ofile" ] || [ "$ofile" -ot "$ifile" ];
-			then
-				# keep type to enable processing of multiple formats
-				echo Printing $i to $ofile
-				print$sourceapp $i &>/dev/null
-				if [ ! -e $auxoutput ];
-				then
-					echo Failed to create $ofile
-					killWINEOFFICE
-					# delete in the case it is there from the previous test
-					# missing file will be in report indicated by grade 7
-				else
-					mv $auxoutput $ofile
-				fi
-			fi
-			)
-		done
-	done
 
 	for a in $rtripapps; do
         echo $(date) - Printing in $a >> ./log

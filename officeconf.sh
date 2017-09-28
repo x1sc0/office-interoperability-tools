@@ -47,6 +47,24 @@ function killOOoServer()
 	fi
 }
 
+#kill WINWORD.EXE or POWERPNT.EXE in case they exist
+function killWINEOFFICE() {
+    if pgrep WINWORD.EXE > /dev/null; then
+        echo "Killing WORD (WINWORD.EXE)"
+        ps -ef | grep WINWORD.EXE | grep -v grep | awk '{print $2}' | xargs kill
+    fi
+    if pgrep POWERPNT.EXE > /dev/null; then
+        sleep 5s
+        #powerpoint might take some seconds to export to pdf. wait 5 seconds
+        #before killing it
+        if pgrep POWERPNT.EXE > /dev/null; then
+            echo "Killing POWERPOINT (POWERPNT.EXE)"
+            ps -ef | grep POWERPNT.EXE | grep -v grep | awk '{print $2}' | xargs kill
+        fi
+    fi
+exit 1
+}
+
 # Check if soffice is running
 function checkLO ()
 {
