@@ -331,7 +331,7 @@ def getRsltTable(testType):
         else:
             progreg=str(sum(lastgrade-maxgrade))
 
-        if checkRegressions and int(progreg) >= -1:
+        if checkRegressions and (int(progreg) >= -1 and not np.array_equal(agrades[0], [7,7,7,7])):
             continue
 
         #Looking for improvements, we only care about fdo bugs
@@ -429,7 +429,7 @@ def getRsltTable(testType):
             if ttype=="roundtrip":
                 pdfpath=app+"/"+filename+".pdf-pair"
             else:
-                pdfpath=app+"/"+filename+"."+subapp+".pdf-pair"
+                pdfpath=app+"/"+filename+".LO.pdf-pair"
 
             pdfPathInDoc = lpath + pdfpath
             for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value

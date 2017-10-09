@@ -634,15 +634,24 @@ def mainfunc():
         #load documents
         pages1, shapes1 = pdf2array(Names[0], dpi)
         if pages1 == None:
-            rsltText = "-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
             raise DoException("failed to open %s."%(Names[0]))
 
+        badpagetxt=""
         pages2, shapes2 = pdf2array(Names[1], dpi)
         if pages2 == None:
-            rsltText = "-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
+            img1 = makeSingle(pages1, shapes1)
+            outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(Names[1]), Names[0], Names[1], "")
+            rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-p.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-p.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-l.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-l.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-z.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-z.pdf'))
+            Image.fromarray(outimg).save(outfile+badpagetxt+'-s.pdf')
+            os.system(exifcmd%(rsltText, outfile+badpagetxt+'-s.pdf'))
             raise DoException("failed to open %s."%(Names[1]))
 
-        badpagetxt=""
 
         if bisecting:
             badpagetxt="-bad"

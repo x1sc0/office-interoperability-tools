@@ -28,29 +28,39 @@ function cmp ()
 {
 	#echo 1 $1
 	refpdf=`basename $1` 	#source document with suffix
-    refpdf=${refpdf//$2.}   #Remove $app from file name
 	refpdf=`basename $refpdf .pdf`	#source document without suffix
-    for ofmt in $oformat; do
-        refpdf=`basename $refpdf .$ofmt `
+    ddd=`dirname $1`
+    subdir=${ddd/\.\//}	# nice subdir path
+    spdf=$sourceapp/$subdir/$refpdf	#source document with nice path
+	for app in `echo $rtripapps`; do
+        appfolder=$app'-'$(ver$app)
+        for ofmt in $oformat; do
+            tpdf=$appfolder/$subdir/$1
+            tpdf="${tpdf/.pdf/.$ofmt.pdf}"
+            docompare $spdf $tpdf $count
+        done
+        for ifmt in $iformat; do
+            tpdf=$appfolder/$subdir/$1
+            tpdf="${tpdf/.pdf/.$ifmt.LO.pdf}"
+            docompare $spdf $tpdf $count
+        done
     done
-	ddd=`dirname $1`
-	subdir=${ddd/\.\//}	# nice subdir path
-	spdf=$sourceapp/$subdir/$refpdf	#source document with nice path
-	tpdf=$4/$subdir/$1
-
-	if [ ! -e "${spdf}.pdf" ] || [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
-	then
-		echo $3 - Creating pairs for  $tpdf and $spdf.pdf
-		time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $tpdf-pair $spdf.pdf $tpdf
-        echo
-
-	    if [ ! -e "${tpdf}-pair-l.pdf" ] || [ "${tpdf}-pair-l.pdf" -ot "$spdf" ];
-	    then
-            rm /tmp/*.tif 2>/dev/null
-        fi
-	fi
 }
 
+function docompare ()
+{
+    if [ ! -e "$1.pdf" ] || [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
+    then
+        echo $3 - Creating pairs for $1.pdf and $2
+        time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $2-pair $1.pdf $2
+        echo
+
+        if [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
+        then
+            rm /tmp/*.tif 2>/dev/null
+        fi
+    fi
+}
 # read the options
 TEMP=`getopt -o h --long help -n 'test.sh' -- "$@"`
 eval set -- "$TEMP"
@@ -95,24 +105,9 @@ then
   		shift
 	done
 else
-	for app in `echo $rtripapps`; do
-        for ofmt in $oformat; do
-            echo $(date) - Processing *.$ofmt.pdf in $app >> ./log
-            echo Processing *.$ofmt.pdf in $app
-            folder=$app'-'$(ver$app)
-            cd $folder
-            pdfs=`find . -name \*.$ofmt.pdf | grep -v pair | sort -n -k 1.7,1.9`
-            cd ..
-            count=0
-            for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
-        done
-        echo $(date) - Processing *.$app.pdf in $app >> ./log
-        echo Processing *.$app.pdf in $app
-        folder=$app'-'$(ver$app)
-        cd $folder
-        pdfs=`find . -name \*.$app.pdf | grep -v pair | sort -n -k 1.7,1.9`
-        cd ..
-        count=0
-        for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $app $count $folder; done
-    done
+    cd $sourceapp
+    pdfs=`find . -name \*.pdf | grep -v pair | sort -n -k 1.7,1.9`
+    cd ..
+    count=0
+    for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $count; done
 fi

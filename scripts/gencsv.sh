@@ -125,7 +125,7 @@ for a in $rtripapps; do
                 line="$line, $retval"
             else
                 #the printed file
-                rsltpdf=$folder/$subdir/$refpdfn.$a.pdf-pair-l.pdf
+                rsltpdf=$folder/$subdir/$refpdfn.LO.pdf-pair-l.pdf
                 getvalues $rsltpdf
                 line="$line,,,,,,$retval"
             fi
