@@ -49,7 +49,7 @@ for rtapp in `echo $rtripapps`; do
 					fi
 
 					# keep type to enable processing of multiple formats
-					ofile2=`dirname $ofile`/`basename $ofile`.LO.pdf
+					ofile2=`dirname $ofile`/`basename $ofile`.$rtapp.pdf
 
 					# convert to pdf
 					# input: orig/bullets.doc

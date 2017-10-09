@@ -429,7 +429,7 @@ def getRsltTable(testType):
             if ttype=="roundtrip":
                 pdfpath=app+"/"+filename+".pdf-pair"
             else:
-                pdfpath=app+"/"+filename+".LO.pdf-pair"
+                pdfpath=app+"/"+filename+"."+subapp+".pdf-pair"
 
             pdfPathInDoc = lpath + pdfpath
             for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value

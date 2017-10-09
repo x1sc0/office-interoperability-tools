@@ -41,7 +41,7 @@ function cmp ()
         done
         for ifmt in $iformat; do
             tpdf=$appfolder/$subdir/$1
-            tpdf="${tpdf/.pdf/.$ifmt.LO.pdf}"
+            tpdf="${tpdf/.pdf/.$ifmt.$app.pdf}"
             docompare $spdf $tpdf $count
         done
     done
