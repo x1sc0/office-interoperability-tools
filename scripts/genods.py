@@ -370,6 +370,12 @@ def getRsltTable(testType):
         if re.search('fdo[0-9]*-[0-9].', testcase):
             ref = 'https://bugs.documentfoundation.org/show_bug.cgi?id=' + str(testcase.split('fdo')[1].split('-')[0])
             link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('tdf[0-9]*-[0-9].', testcase):
+            ref = 'https://bugs.documentfoundation.org/show_bug.cgi?id=' + str(testcase.split('tdf')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
+        elif re.search('ooo[0-9]*-[0-9].', testcase):
+            ref = 'https://bz.apache.org/ooo/show_bug.cgi?id=' + str(testcase.split('ooo')[1].split('-')[0])
+            link = A(type="simple",href="%s"%ref, text=testcase)
         elif re.search('abi[0-9]*-[0-9].', testcase):
             ref = 'https://bugzilla.abisource.com/show_bug.cgi?id=' + str(testcase.split('abi')[1].split('-')[0])
             link = A(type="simple",href="%s"%ref, text=testcase)
