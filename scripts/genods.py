@@ -347,7 +347,7 @@ def getRsltTable(testType):
         if checkRegressions:
             if testType == "print":
                 lImportReg.append(name)
-            elif testType == "roundtrip":
+            elif testType == "roundtrip" and not np.array_equal(agrades[0], [7,7,7,7]):
                 if name in lImportReg or name in lExportReg:
                     continue
                 lExportReg.append(name)
