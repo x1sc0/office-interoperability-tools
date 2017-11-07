@@ -92,7 +92,7 @@ def loadCSV(csvfile):
         """ Load the results
         Retuns: ID list of ints, ROI (array) of strings
         """
-        global fdoBugs
+        global tdfBugs
         # get information about the slices first
         vcnt=5  # we expect 5 error measures
         values = {}
@@ -114,7 +114,9 @@ def loadCSV(csvfile):
                                 d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
                             values[row[0]] = d
                             if re.search('fdo[0-9]*-[0-9].', row[0]):
-                                fdoBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
+                                tdfBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
+                            elif re.search('tdf[0-9]*-[0-9].', row[0]):
+                                tdfBugs.add(str(row[0].split('tdf')[1].split('-')[0]))
                         cnt +=1
                         #if cnt > 100: break
         return apps, labels, values
@@ -192,7 +194,7 @@ def addAnnL(txtlist):
         return ann
 
 def getRsltTable(testType):
-    global ranks, showalllinks, useapps, tagsr, tagsp, lFdoOpenImport, lFdoExport
+    global ranks, showalllinks, useapps, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport
     if testType == "all":
         aux=targetApps
     else:
@@ -336,9 +338,12 @@ def getRsltTable(testType):
 
         #Looking for improvements, we only care about fdo bugs
         if checkImprovements and ( int(progreg) < 1 or \
-                not re.search('fdo[0-9]*-[0-9].', testcase) or \
-                (testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in lFdoOpenImport) or \
-                (testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in lFdoOpenExport)):
+                ((not re.search('tdf[0-9]*-[0-9].', testcase) and \
+                not re.search('fdo[0-9]*-[0-9].', testcase)) or \
+                (testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport and \
+                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport) or \
+                (testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport and
+                testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport))):
             continue
 
         name = testcase.split("/",1)[-1].split(".")[0]
@@ -578,7 +583,7 @@ LNDMax = (0.01,0.01,0.01,0.01,0.01)
 lpath = '../'
 #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
 
-fdoBugs = set()
+tdfBugs = set()
 
 parsecmd(progdesc)
 if lpath[-1] != '/': lpath = lpath+'/'
@@ -587,22 +592,24 @@ targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
 targetApps = targetApps + targetApps2
 testLabels = testLabels + testLabels2
 
-fdoBugs = list(fdoBugs)
+tdfBugs = list(tdfBugs)
 
-fdoStatuses = []
-for i in range(0, len(fdoBugs), 500):
-    subList = fdoBugs[i: i + 500]
+tdfStatuses = []
+for i in range(0, len(tdfBugs), 200):
+    subList = tdfBugs[i: i + 200]
     url = rest_url + ",".join(str(x) for x in subList) + field
-    fdoStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
+    tdfStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
 
-lFdoOpenImport = []
-lFdoOpenExport = []
-for item in fdoStatuses:
+lTdfOpenImport = []
+lTdfOpenExport = []
+for item in tdfStatuses:
     if item['status'] == 'NEW':
+        if item['id'] == 91799:
+            print(item['summary'].lower())
         if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
-            lFdoOpenImport.append(str(item['id']))
+            lTdfOpenImport.append(str(item['id']))
         elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
-            lFdoOpenExport.append(str(item['id']))
+            lTdfOpenExport.append(str(item['id']))
 
 result = defaultdict(dict)
 for d in values, values2:
