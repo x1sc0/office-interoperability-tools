@@ -338,11 +338,11 @@ def getRsltTable(testType):
 
         #Looking for improvements, we only care about fdo bugs
         if checkImprovements and ( int(progreg) < 1 or \
-                ((not re.search('tdf[0-9]*-[0-9].', testcase) and \
-                not re.search('fdo[0-9]*-[0-9].', testcase)) or \
-                (testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport and \
-                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport) or \
-                (testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport and
+                ((not re.search('fdo[0-9]*-[0-9].', testcase) or \
+                testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in lTdfOpenImport or \
+                testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in lTdfOpenExport) and
+                (not re.search('tdf[0-9]*-[0-9].', testcase) or \
+                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport or \
                 testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport))):
             continue
 
