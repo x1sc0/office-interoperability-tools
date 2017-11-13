@@ -37,12 +37,12 @@ function cmp ()
         for ofmt in $oformat; do
             tpdf=$appfolder/$subdir/$1
             tpdf="${tpdf/.pdf/.$ofmt.pdf}"
-            docompare $spdf $tpdf $count
+            docompare $spdf $tpdf $count $total
         done
         for ifmt in $iformat; do
             tpdf=$appfolder/$subdir/$1
             tpdf="${tpdf/.pdf/.$ifmt.$app.pdf}"
-            docompare $spdf $tpdf $count
+            docompare $spdf $tpdf $count $total
         done
     done
 }
@@ -51,7 +51,7 @@ function docompare ()
 {
     if [ ! -e "$1.pdf" ] || [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
     then
-        echo $3 - Creating pairs for $1.pdf and $2
+        echo $3/$4 - Creating pairs for $1.pdf and $2
         time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $2-pair $1.pdf $2
         echo
 
@@ -107,7 +107,8 @@ then
 else
     cd $sourceapp
     pdfs=`find . -name \*.pdf | grep -v pair | sort -n -k 1.7,1.9`
+    total=`find . -type f | wc -l`
     cd ..
     count=0
-    for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $count; done
+    for pdfdoc in $pdfs; do ((count++)); cmp $pdfdoc $count $total; done
 fi
