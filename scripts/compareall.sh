@@ -26,7 +26,6 @@ function usage
 
 function cmp ()
 {
-	#echo 1 $1
 	refpdf=`basename $1` 	#source document with suffix
 	refpdf=`basename $refpdf .pdf`	#source document without suffix
     ddd=`dirname $1`
@@ -37,12 +36,18 @@ function cmp ()
         for ofmt in $oformat; do
             tpdf=$appfolder/$subdir/$1
             tpdf="${tpdf/.pdf/.$ofmt.pdf}"
-            docompare $spdf $tpdf $count $total
+            if [[ -e $tpdf ]]
+            then
+                docompare $spdf $tpdf $count $total
+            fi
         done
         for ifmt in $iformat; do
             tpdf=$appfolder/$subdir/$1
             tpdf="${tpdf/.pdf/.$ifmt.$app.pdf}"
-            docompare $spdf $tpdf $count $total
+            if [[ -e $tpdf ]]
+            then
+                docompare $spdf $tpdf $count $total
+            fi
         done
     done
 }

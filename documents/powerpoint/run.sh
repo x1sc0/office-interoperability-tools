@@ -4,7 +4,7 @@ source ./config.sh
 export iformat="ppt pptx"
 
 #set output type here
-export oformat="ppt pptx"
+export oformat="ppt pptx odp"
 
 export sourcedir="orig"	#copy test files here (docx in this case, may have subdirectories)
 
