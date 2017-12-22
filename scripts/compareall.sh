@@ -63,6 +63,7 @@ function docompare ()
         if [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
         then
             rm /tmp/*.tif 2>/dev/null
+            rm /tmp/gs_*
         fi
     fi
 }
