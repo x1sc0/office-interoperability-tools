@@ -120,12 +120,12 @@ for a in $rtripapps; do
 
             if [ $dir == $folder ]; then
                 #the roundtrip file
-                rsltpdf=$folder/$subdir/$refpdfn.pdf-pair-l.pdf
+                rsltpdf=$folder/$subdir/$refpdfn.export.pdf-pair-l.pdf
                 getvalues $rsltpdf
                 line="$line, $retval"
             else
                 #the printed file
-                rsltpdf=$folder/$subdir/$refpdfn.$a.pdf-pair-l.pdf
+                rsltpdf=$folder/$subdir/$refpdfn.import.pdf-pair-l.pdf
                 getvalues $rsltpdf
                 line="$line,,,,,,$retval"
             fi

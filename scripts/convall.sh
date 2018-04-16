@@ -50,11 +50,11 @@ for rtapp in `echo $rtripapps`; do
 					fi
 
 					# keep type to enable processing of multiple formats
-					ofile2=`dirname $ofile`/`basename $ofile`.$rtapp.pdf
+					ofile2=`dirname $ofile`/`basename $ofile`.import.pdf
 
 					# convert to pdf
 					# input: orig/bullets.doc
-					# output: LO52/bullets.doc.LO52.pdf
+					# output: LO52/bullets.doc.import.pdf
 
                     if [ $ofmt == $ifmt ]; then
 					    if [ ! -e "$ofile2" ] || [ "$ofile2" -ot "$ifile" ]; then

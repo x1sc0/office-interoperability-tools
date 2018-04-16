@@ -13,11 +13,13 @@ echo $line >> ./log
 
 dpi=300		#dpi to render pdfs
 threshold=166	#threshold to identify foreground
+odf=false
 
 function usage
 {
 	echo "$0: Compare pdf files and generate pair pdfs" 1>&2
 	echo "Usage: $0 applist" 1>&2
+    echo "     --odf ............ Used to compare ODF formats as input" 1>&2
 	#not functional
 	#echo "    -d int ............ dpi for rendering of pdf files {$dpi}" 1>&2
 	#echo "    -t int ............ threshold to identify foreground {$threshold}" 1>&2
@@ -35,7 +37,9 @@ function cmp ()
         appfolder=$app'-'$(ver$app)
         for ofmt in $oformat; do
             tpdf=$appfolder/$subdir/$1
-            tpdf="${tpdf/.pdf/.$ofmt.pdf}"
+            if [ "$odf" == false ]; then
+                tpdf="${tpdf/.pdf/.$ofmt.export.pdf}"
+            fi
             if [[ -e $tpdf ]]
             then
                 docompare $spdf $tpdf $count $total
@@ -43,7 +47,9 @@ function cmp ()
         done
         for ifmt in $iformat; do
             tpdf=$appfolder/$subdir/$1
-            tpdf="${tpdf/.pdf/.$ifmt.$app.pdf}"
+            if [ "$odf" == false ]; then
+                tpdf="${tpdf/.pdf/.$ifmt.import.pdf}"
+            fi
             if [[ -e $tpdf ]]
             then
                 docompare $spdf $tpdf $count $total
@@ -67,22 +73,23 @@ function docompare ()
         fi
     fi
 }
-# read the options
-TEMP=`getopt -o h --long help -n 'test.sh' -- "$@"`
-eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
-while true ; do
+for i in "$@"
+    do
     case "$1" in
-        -h|--help)
-		usage; exit 1;;
+    -h|--help)
+		usage;
+        exit 1;;
+    --odf)
+		odf=true
+        shift
+        ;;
 	-g)
-		shift
 		dpi=$1
 		shift
 		;;
 	-t)
-		shift
 		threshold=$1
 		shift
 		;;
@@ -90,10 +97,6 @@ while true ; do
         *) echo "Internal error!" ; exit 1 ;;
     esac
 done
-shift $(expr $OPTIND - 1 )
-
-# file names: bullets.docx.pdf
-
 
 if [[ $# -gt 0 ]]
 then

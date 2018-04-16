@@ -38,6 +38,7 @@ def usage(desc):
     print "\t--output outfile.odt ........ report {default: "+ofname+"}"
     print "\t--regression ....... Only display the regressions"
     print "\t--improvement ....... Only display the improvements"
+    print "\t--odf ....... Check changes in ODF files"
     print "\t-r rankfile.csv ....... document ranking"
     print "\t-t tagMax1-roundtrip.csv . document tags"
     print "\t-n tagMax1-print.csv ..... document tags"
@@ -48,10 +49,10 @@ def usage(desc):
     print "\t-h .................... this usage"
 
 def parsecmd(desc):
-    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements
+    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
 
     try:
-        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output=', 'regression', 'improvement'])
+        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -71,6 +72,8 @@ def parsecmd(desc):
             checkRegressions = True
         elif o == "--improvement":
             checkImprovements = True
+        elif o == "--odf":
+            checkOdf = True
         elif o == "--old":
             ifNameOld = a
         elif o in ("-t"):
@@ -432,9 +435,9 @@ def getRsltTable(testType):
             filename=testcase.split("/",1)[-1]  # get subdirectories, too
 
             if ttype=="roundtrip":
-                pdfpath=app+"/"+filename+".pdf-pair"
+                pdfpath=app+"/"+filename+".export.pdf-pair"
             else:
-                pdfpath=app+"/"+filename+"."+subapp+".pdf-pair"
+                pdfpath=app+"/"+filename+".import.pdf-pair"
 
             pdfPathInDoc = lpath + pdfpath
             for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value
@@ -565,6 +568,7 @@ tm1roundtrip = None
 tm1print = None
 checkRegressions = False
 checkImprovements = False
+checkOdf = False
 
 # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
 testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
@@ -588,9 +592,10 @@ tdfBugs = set()
 parsecmd(progdesc)
 if lpath[-1] != '/': lpath = lpath+'/'
 targetApps, testLabels, values = loadCSV(ifNameNew)
-targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
-targetApps = targetApps + targetApps2
-testLabels = testLabels + testLabels2
+if not checkOdf:
+    targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
+    targetApps = targetApps + targetApps2
+    testLabels = testLabels + testLabels2
 
 tdfBugs = list(tdfBugs)
 
@@ -611,12 +616,13 @@ for item in tdfStatuses:
         elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
             lTdfOpenExport.append(str(item['id']))
 
-result = defaultdict(dict)
-for d in values, values2:
-    for k, v in d.iteritems():
-        result[k].update(v)
+if not checkOdf:
+    result = defaultdict(dict)
+    for d in values, values2:
+        for k, v in d.iteritems():
+            result[k].update(v)
 
-values = result
+    values = result
 
 ranks= None
 if rfname:
