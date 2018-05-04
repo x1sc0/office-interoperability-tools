@@ -549,6 +549,7 @@ def usage(desc):
     print "\t-z ................ page overlay with vertical and horizontal line alignment {default: all}"
     print "\t-t ................ binarization threshold {default: %d}"%binthr
     print "\t-b ................ run within the git bisect process (names of the output files will be modified) {default: normal}"
+    print "\t-c ................ Only creates an overlay PDF {default: normal}"
     print "\t-g int ............ threshold used in bisecting to distinguish good/bad (1-5) {default: %d}"%badThr
     print "\t--source-id string  additional info to be printed in rendered pdf {default: none}"
     print "\t--target-id string  additional info to be printed in rendered pdf {default: none}"
@@ -556,9 +557,9 @@ def usage(desc):
     print "\t-h ................ this usage"
 
 def parsecmd(desc):
-    global verbose, dpi, Names, annotated, overlayStyle, outfile, binthr, bisecting, badThr, sourceid, targetid
+    global verbose, dpi, Names, annotated, overlayStyle, outfile, binthr, bisecting, createOverlayPDF, badThr, sourceid, targetid
     try:
-            opts, Names = getopt.getopt(sys.argv[1:], "hvalpszbg:o:d:t:", ["help", "verbose", "source-id=", "target-id="])
+            opts, Names = getopt.getopt(sys.argv[1:], "hvalpszbgc:o:d:t:", ["help", "verbose", "source-id=", "target-id="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -574,6 +575,8 @@ def parsecmd(desc):
             annotated = True
         elif o in ("-b"):
             bisecting = True
+        elif o in ("-c"):
+            createOverlayPDF = True
         elif o in ("-s"):
             overlayStyle = 's'  #side-by-side
         elif o in ("-p"):
@@ -591,9 +594,9 @@ def parsecmd(desc):
         elif o in ("-t"):
             binthr = int(a)
         elif o in ("--source-id"):
-                        sourceid=a
+            sourceid=a
         elif o in ("--target-id"):
-                        targetid=a
+            targetid=a
         else:
             assert False, "unhandled option"
         # ...
@@ -604,6 +607,7 @@ a4height=297
 i2mm=25.4    # inch to mm conversion
 annotated = False
 bisecting = False
+createOverlayPDF = False
 badThr = 3
 overlayStyle = 'a'  #output all versions by default
 progdesc="Compare two pdf documents and return some statistics"
@@ -638,6 +642,18 @@ def mainfunc():
 
         badpagetxt=""
         pages2, shapes2 = pdf2array(Names[1], dpi)
+
+        if createOverlayPDF:
+            img1 = makeSingle(pages1, shapes1)
+            img2 = makeSingle(pages2, shapes2)
+            bimg1 = toBin(img1,binthr)
+            bimg2 = toBin(img2,binthr)
+            outimg = genoverlay(bimg1, '', Names[0], Names[1], '', img2=bimg2)
+            rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
+            Image.fromarray(outimg).save(outfile+'.pdf')
+            os.system(exifcmd%(rsltText, outfile+'.pdf'))
+            sys.exit(0)
+
         if pages2 == None:
             img1 = makeSingle(pages1, shapes1)
             outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(Names[1]), Names[0], Names[1], "")
@@ -685,6 +701,7 @@ def mainfunc():
             Image.fromarray(outimg).save(outfile+badpagetxt+'-s.pdf')
             os.system(exifcmd%(rsltText, outfile+badpagetxt+'-s.pdf'))
             raise DoException(msg)
+
 
         #crop to common size
         s1 = img1.shape

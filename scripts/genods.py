@@ -24,6 +24,7 @@ from collections import defaultdict
 
 import requests
 import ast
+import subprocess
 
 rest_url = 'https://bugs.documentfoundation.org/rest/bug?id='
 field = '&include_fields=id,status,summary'
@@ -33,8 +34,8 @@ PWENC = "utf-8"
 def usage(desc):
     print sys.argv[0]+':'
     print "Usage: ", sys.argv[0], "[options]"
-    print "\t--new all.csv ... ..... report"
-    print "\t--old all.csv ... ..... report"
+    print "\t--new Path to the new build"
+    print "\t--old Path to the old build"
     print "\t--output outfile.odt ........ report {default: "+ofname+"}"
     print "\t--regression ....... Only display the regressions"
     print "\t--improvement ....... Only display the improvements"
@@ -67,7 +68,7 @@ def parsecmd(desc):
         elif o == "--output":
             ofname = a
         elif o == "--new":
-            ifNameNew = a
+            ifNameNew = a.rstrip('\/')
         elif o == "--regression":
             checkRegressions = True
         elif o == "--improvement":
@@ -75,7 +76,7 @@ def parsecmd(desc):
         elif o == "--odf":
             checkOdf = True
         elif o == "--old":
-            ifNameOld = a
+            ifNameOld = a.rstrip('\/')
         elif o in ("-t"):
              tm1roundtrip= a
         elif o in ("-n"):
@@ -91,7 +92,7 @@ def parsecmd(desc):
         else:
             assert False, "unhandled option"
 
-def loadCSV(csvfile):
+def loadCSV(path):
         """ Load the results
         Retuns: ID list of ints, ROI (array) of strings
         """
@@ -99,6 +100,8 @@ def loadCSV(csvfile):
         # get information about the slices first
         vcnt=5  # we expect 5 error measures
         values = {}
+        csvfile= path + '/all.csv'
+
         with open(csvfile, 'rb') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
                 values = {}
@@ -197,7 +200,7 @@ def addAnnL(txtlist):
         return ann
 
 def getRsltTable(testType):
-    global ranks, showalllinks, useapps, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport
+    global ranks, showalllinks, useapps, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport, scriptPath
     if testType == "all":
         aux=targetApps
     else:
@@ -220,7 +223,12 @@ def getRsltTable(testType):
     # Start the table, and describe the columns
     table = Table(name=testType)
     table.addElement(TableColumn(numbercolumnsrepeated=1,stylename=nameColStyle))
-    table.addElement(TableColumn(numbercolumnsrepeated=4,stylename=rankColStyle))
+    table.addElement(TableColumn(stylename=linkColStyle))
+    if checkOdf:
+        table.addElement(TableColumn(numbercolumnsrepeated=3,stylename=rankColStyle))
+    else:
+        table.addElement(TableColumn(numbercolumnsrepeated=4,stylename=rankColStyle))
+
     for i in targetAppsSel:
         for i in range(len(testLabels)-1):
             table.addElement(TableColumn(stylename=valColStyle))
@@ -266,9 +274,12 @@ def getRsltTable(testType):
     tc.addElement(p)
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("P/R",PWENC))
-    tc.addElement(p)
-    tc.addElement(addAnn("Negative: progression, positive: regression, 0: no change"))
+    if not checkOdf:
+        tc = TableCell(stylename="THstyle") #empty cell
+        tr.addElement(tc)
+        p = P(stylename=tablecontents,text=unicode("P/R",PWENC))
+        tc.addElement(p)
+        tc.addElement(addAnn("Negative: progression, positive: regression, 0: no change"))
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
     p = P(stylename=tablecontents,text=unicode("Max last",PWENC))
@@ -401,10 +412,12 @@ def getRsltTable(testType):
         p.addElement(link)
         tc.addElement(p)
 
-        tc = TableCell(valuetype="float", value=progreg)
-        tr.addElement(tc)
-        #p = P(stylename=tablecontents,text=unicode(progreg,PWENC))
-        #tc.addElement(p)
+        tComparison = TableCell(stylename="THstyle")
+        tr.addElement(tComparison)
+
+        if not checkOdf:
+            tc = TableCell(valuetype="float", value=progreg)
+            tr.addElement(tc)
 
         # max last
         lastmax = max([valToGrade(values[testcase][a][1:]) for a in targetAppsSel][-1])
@@ -430,15 +443,31 @@ def getRsltTable(testType):
             app, ttype = a.split()
             subapp = app.split('-')[0]
 
-            #create pdf path
-            #ipdb.set_trace()
             filename=testcase.split("/",1)[-1]  # get subdirectories, too
 
             if ttype=="roundtrip":
-                pdfpath=app+"/"+filename+".export.pdf-pair"
+                pdfpath=app+"/"+filename+".export"
             else:
-                pdfpath=app+"/"+filename+".import.pdf-pair"
+                pdfpath=app+"/"+filename+".import"
 
+            if not checkOdf:
+                if ifNameOld == app:
+                    oldInput = pdfpath + '.pdf'
+                    if os.path.exists(oldInput):
+                        newInput = pdfpath.replace(app, ifNameNew) + '.pdf'
+                        if os.path.exists(newInput):
+                            output = pdfpath + '-comparison.pdf'
+                            if not os.path.exists(output):
+                                subprocess.call(
+                                        ['python', scriptPath + '/docompare.py',
+                                            '-c', '-a', '-o' + output, oldInput, newInput])
+                            p = P(stylename=tablecontents,text=unicode("",PWENC))
+                            pdfPathInDoc = lpath + output
+                            comparisonLink = A(type="simple",href=pdfPathInDoc, text=">")
+                            p.addElement(comparisonLink)
+                            tComparison.addElement(p)
+
+            pdfpath = pdfpath + '.pdf-pair'
             pdfPathInDoc = lpath + pdfpath
             for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value
                 if max(grades) > 1:
@@ -454,6 +483,13 @@ def getRsltTable(testType):
                     if showalllinks or a==targetAppsSel[-1]:
                         p.addElement(link)
                     tc.addElement(p)
+                    if checkOdf:
+                        if viewType == 'l':
+                            pComparison = P(stylename=tablecontents,text=unicode("",PWENC))
+                            linkComparison = A(type="simple",href=pdfPathInDoc+"-l.pdf", text=">")
+                            pComparison.addElement(linkComparison)
+                            tComparison.addElement(pComparison)
+
             tc = TableCell(stylename="THstyle")
 
             sumall = sum(valToGrade(values[testcase][a][1:]))
@@ -569,6 +605,7 @@ tm1print = None
 checkRegressions = False
 checkImprovements = False
 checkOdf = False
+scriptPath = os.path.dirname(os.path.realpath(__file__))
 
 # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
 testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
