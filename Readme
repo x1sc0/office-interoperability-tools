@@ -135,15 +135,19 @@ Four different views are generated for each test:
 
 One can open these files directly from the spreadsheed by clicking on cells with the ">" character.
 
-Running the script:
+Running the script for ODF files:
 
-Example: ../../scripts/genods.py --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt.ods
+Example: ../../scripts/genods.py --odf --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e --output rslt.ods
+
+Running the script for other kind of files:
+
+Example: ../../scripts/genods.py --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00 --output rslt.ods
 
 If 'regression' flag is used, only the regressions will be displayed.
-Example: ../../scripts/genods.py --regression --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt19-09-2017regression.ods
+Example: ../../scripts/genods.py --regression --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00 --output rslt19-09-2017regression.ods
 
 However, if 'improvement' flas is used, onlt the improvements will be displayed.
-Example: ../../scripts/genods.py --improvement --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e/all.csv --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00/all.csv --output rslt19-09-2017improvement.ods
+Example: ../../scripts/genods.py --improvement --new LOMASTER-fc61be93c60967bf1d6bcffcada8189016d4530e --old LOMASTER-46aba1db9a8e43da03f4db580b8dc9de7b850b00 --output rslt19-09-2017improvement.ods
 
 
 -------------
