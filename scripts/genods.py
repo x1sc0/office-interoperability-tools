@@ -360,6 +360,11 @@ def getRsltTable(testType):
                 testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport))):
             continue
 
+        if checkOdf:
+            allsum = sum([sum(valToGrade(values[testcase][a][1:])) for a in targetAppsSel] )
+            if allsum <= 5:
+                continue
+
         name = testcase.split("/",1)[-1].split(".")[0]
 
         #Avoid showing import regressions as export regressions
