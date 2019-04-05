@@ -60,10 +60,13 @@ function cmp ()
 
 function docompare ()
 {
+
     if [ ! -e "$1.pdf" ] || [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
     then
+        script_name=$0
+        script_full_path=$(dirname "$0")
         echo $3/$4 - Creating pairs for $1.pdf and $2
-        time timeout 240s  docompare.py -t $threshold -d $dpi -a -o $2-pair $1.pdf $2
+        time timeout 240s  $script_full_path/docompare.py -t $threshold -d $dpi -a -o $2-pair $1.pdf $2
         echo
 
         if [ ! -e "$2-pair-l.pdf" ] || [ "$2-pair-l.pdf" -ot "$1" ];
