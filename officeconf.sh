@@ -216,7 +216,7 @@ then
 	canprintLOMASTER=1		# we can print to pdf
     verLOMASTER() { $LOMASTERPROG --version | awk '{print $3;}' | xargs echo -n; }
 	#usage: convLO5MLIN docx file.odf #converts the given file to docx
-	convLOMASTER() { $LOMASTERPROG --headless --convert-to $1 $2 &> /dev/null; }
+	convLOMASTER() { $LOMASTERPROG -env:UserInstallation=file:///tmp/test --headless --convert-to $1 $2 &> /dev/null; }
 fi
 
 if [ -x "$LO5MMACPROG" ]
