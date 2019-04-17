@@ -20,7 +20,7 @@ function usage
 
 
 # read configuration
-. $FTPATH/officeconf.sh 
+. $FTPATH/officeconf.sh
 rtripapp=""
 ifile=xx.odt
 ofile=xx.pdf
@@ -70,18 +70,21 @@ then
 fi
 
 let canconvert=canconvert$rtripapp
-if [ $canconvert -eq 1 ] 
+if [ $canconvert -eq 1 ]
 then
 	if [ $apptype == "LO" -o $apptype == "AO" -o $apptype == "OO" -o $apptype == "BB" ]
 	then
+        #Remove the user profile
+        rm -Rf /tmp/test/user
+
 		echo "$0 Converting $ifile to $ofile using $rtripapp" 2>&1
 		cp $ifile auxttt.$fromtype
 		conv$rtripapp xx.$totype auxttt.$fromtype
 		if [ -e auxttt.xx.$totype ]
-		then 
+		then
 			mv auxttt.xx.$totype $ofile
-			rm -f auxttt.$fromtype 
-		else 
+			rm -f auxttt.$fromtype
+		else
 			cp $failed.$totype $ofile
 			echo $0: $ifile failed to open by conv$rtripapp
 			exit 1
@@ -92,10 +95,10 @@ then
 		cp $ifile auxttt.$fromtype
 		conv$rtripapp $totype auxttt.$fromtype
 		if [ -e auxttt.$totype ]
-		then 
+		then
 			mv auxttt.$totype $ofile
-			rm -f auxttt.$fromtype 
-		else 
+			rm -f auxttt.$fromtype
+		else
 			cp $failed.$totype $ofile
 			echo $0: $ifile failed to open by conv$rtripapp
 			exit 1
@@ -107,7 +110,7 @@ then
 		##echo conv$rtripapp xx.$totype auxttt.$fromtype
 		#conv$rtripapp xx.$totype auxttt.$fromtype
 		#mv auxttt.xx.$totype $ofile
-		#rm auxttt.$fromtype 
+		#rm auxttt.$fromtype
 	elif [ $apptype == "MS" ]
 	then
 		echo "$0: Converting $ifile to $ofile using $rtripapp" 2>&1
@@ -124,15 +127,15 @@ then
 		cp $ifile auxttt.$fromtype
 		$GDCONVERT $totype auxttt.$fromtype
 		if [ -e auxttt.$totype ]
-		then 
+		then
 			mv auxttt.$totype $ofile
-			rm -f auxttt.$fromtype 
-		else 
+			rm -f auxttt.$fromtype
+		else
 			cp $failed.$totype $ofile
 			echo $0: $ifile failed to open by $GDCONVERT
 		fi
 	else
-		echo "$0: Unsupported application $rtripapp" 2>&1 
+		echo "$0: Unsupported application $rtripapp" 2>&1
 	fi
 else
 	echo "$0 error: $rtripapp conversion executable not defined. Is this the right system?" 2>&1
