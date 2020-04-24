@@ -25,7 +25,6 @@
 # in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
 # instead of those above.
 
-import argparse
 import os
 import glob
 import subprocess
@@ -35,6 +34,7 @@ import uuid
 import datetime
 import tempfile
 import config
+import parser
 
 import signal
 import threading
@@ -59,18 +59,6 @@ except ImportError:
     print("UNO API class not found: try to set URE_BOOTSTRAP variable")
     print("URE_BOOTSTRAP=file:///installation/opt/program/fundamentalrc")
     raise
-
-### utilities ###
-
-def partition(list, pred):
-    left = []
-    right = []
-    for e in list:
-        if pred(e):
-            left.append(e)
-        else:
-            right.append(e)
-    return (left, right)
 
 def getFiles(filesPath, extensions):
     auxNames = []
@@ -97,16 +85,8 @@ class OfficeConnection:
         self.xContext = None
         self.pro = None
     def setUp(self):
-        (method, sep, rest) = self.args.soffice.partition(":")
-        if sep != ":":
-            raise Exception("soffice parameter does not specify method")
-        if method == "path":
-                socket = "pipe,name=pytest" + str(uuid.uuid1())
-                self.soffice = self.bootstrap(rest, socket)
-        elif method == "connect":
-                socket = rest
-        else:
-            raise Exception("unsupported connection method: " + method)
+        socket = "pipe,name=pytest" + str(uuid.uuid1())
+        self.soffice = self.bootstrap(self.args.soffice, socket)
         self.xContext = self.connect(socket)
 
     def bootstrap(self, soffice, socket):
@@ -516,58 +496,17 @@ def runLoadFileTests(arguments, files, isImport):
 
     return exportedFiles
 
-components = ["writer", "calc", "impress"]
-types = ["odf", "ooxml"]
-
-class DefaultParser(argparse.ArgumentParser):
-
-    def error(self, message):
-        sys.stderr.write('error: %s\n' % message)
-        self.print_help()
-        sys.exit(2)
-
-    def check_values(self):
-        if arguments.dir:
-            if not os.path.exists(arguments.dir):
-                parser.error(arguments.dir + " doesn't exists")
-
-        if arguments.outdir:
-            if not os.path.exists(arguments.outdir):
-                parser.error(arguments.outdir + " doesn't exists")
-
-        if arguments.type:
-            if arguments.type not in types:
-                parser.error(arguments.type + " is an invalid type")
-
-        if arguments.component:
-            if arguments.component not in  components:
-                parser.error(arguments.component + " is an invalid component")
-
 if __name__ == "__main__":
-    parser = DefaultParser()
+    parser = parser.CommonParser()
+    parser.add_arguments(['--soffice', '--type', '--component', '--dir', '--outdir'])
 
-    parser.add_argument('--soffice', required=True,
-            help="""--soffice=method:location
-            specify soffice instance to connect to
-            supported methods: 'path', 'connect'""")
-    parser.add_argument('--type', required=True,
-            help="The mimetype to be tested. Options: 'ooxml' or 'odf'")
-    parser.add_argument('--component', required=True,
-            help="The component to be used. Options: 'calc', 'writer' or 'impress'")
-    parser.add_argument('--dir', required=True,
-            help="Path to the files directory")
-    parser.add_argument('--outdir', required=True,
-            help="Path to output directory")
-
-    arguments = parser.parse_args()
-    parser.check_values()
+    arguments = parser.check_values()
 
     extensions = config.config[arguments.type][arguments.component]["import"]
     importFiles = getFiles(arguments.dir, extensions)
 
     if importFiles:
         exportedFiles = runLoadFileTests(arguments, importFiles, True)
-        print(exportedFiles)
 
     if exportedFiles:
         # Convert the roundtripped files to PDF
@@ -577,6 +516,5 @@ if __name__ == "__main__":
     for fileName in exportedFiles:
         if os.path.isfile(fileName):
             os.remove(fileName)
-
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:

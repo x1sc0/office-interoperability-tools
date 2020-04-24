@@ -26,7 +26,7 @@ from __future__ import print_function
 import feedparser
 import base64
 import datetime
-import argparse
+import parser
 import glob
 import re
 import os, os.path
@@ -444,30 +444,12 @@ def generate_multi_threading():
         jobs.join()
         print("DONE with bugtracker " + prefix)
 
-class DefaultHelpParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('error: %s\n' % message)
-        self.print_help()
-        sys.exit(2)
+parser = parser.CommonParser()
+parser.add_arguments(['--outdir', '--type'])
+arguments = parser.check_values()
 
-parser = DefaultHelpParser()
-
-parser.add_argument(
-        '--outdir', required=True, help="Output directory")
-parser.add_argument(
-        '--type', required=True, help="The mimetypes to be downloaded. Options: 'ooxml' or 'odf'")
-
-argument = parser.parse_args()
-
-folder = os.path.join(argument.outdir, '')
-if not os.path.exists(folder):
-    parser.error(folder + " is an invalid directory path")
-
-mimetypeStr = argument.type.lower()
-if mimetypeStr != 'ooxml' and mimetypeStr != 'odf':
-    parser.error( mimetypeStr + " is an invalid type")
-
-mimetypes = eval(mimetypeStr)
+folder = arguments.outdir
+mimetypes = eval(arguments.type)
 
 max_threads = 20 # Number of threads to create, (1 = without multi-threading)
 jobs = queue.Queue()
