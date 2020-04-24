@@ -336,13 +336,11 @@ def exportDoc(xDoc, fileName, filterName, connection, timer):
     print("xDoc.storeToURL " + fileURL + " " + filterName + "\n")
 
 class ExportFileTest:
-    def __init__(self, xDoc, filename, args, timer, isImport):
+    def __init__(self, xDoc, filename, args, timer):
         self.xDoc = xDoc
         self.filename = filename
         self.args = args
         self.timer = timer
-        self.isImport = isImport
-        self.exportedFiles = []
 
     def run(self, connection):
 
@@ -361,46 +359,32 @@ class ExportFileTest:
 
         fileBaseName = os.path.basename(self.filename)
 
-        if self.isImport:
-            fileNameNoExtension = os.path.splitext(fileBaseName)[0]
-            filePath = self.args.outdir + '/' + fileNameNoExtension
-            formats = config.config[self.args.type][self.args.component]["export"]
-            for extension in formats:
+        fileNameNoExtension = os.path.splitext(fileBaseName)[0]
+        filePath = self.args.outdir + '/' + fileNameNoExtension
+        formats = config.config[self.args.type][self.args.component]["export"]
+        for extension in formats:
 
-                if extension == "pdf":
-                    fileName = filePath + '.import.pdf'
-                else:
-                    fileName = filePath + "." + extension
-                    self.exportedFiles.append(fileName)
+            if extension == "pdf":
+                fileName = filePath + '.import.pdf'
+            else:
+                fileName = filePath + "." + extension
 
-                # Document has been roundtripped to PDF, no need to continue
-                if os.path.exists(fileName) or os.path.exists(fileName + '.export.pdf'):
-                    continue
+            # Document has been roundtripped to PDF, no need to continue
+            if os.path.exists(fileName) or os.path.exists(fileName + '.export.pdf'):
+                continue
 
-                filterName = filterNames[extension]
+            filterName = filterNames[extension]
 
-                xExportedDoc = exportDoc(
-                    self.xDoc, fileName, filterName, connection, self.timer)
-                if xExportedDoc:
-                    xExportedDoc.close(True)
-        else:
-            fileName = self.args.outdir + '/' + fileBaseName + '.export.pdf'
-
-            if not os.path.exists(fileName):
-                filterName = filterNames['pdf']
-
-                xExportedDoc = exportDoc(
-                    self.xDoc, fileName, filterName, connection, self.timer)
-                if xExportedDoc:
-                    xExportedDoc.close(True)
+            xExportedDoc = exportDoc(
+                self.xDoc, fileName, filterName, connection, self.timer)
+            if xExportedDoc:
+                xExportedDoc.close(True)
 
 class LoadFileTest:
-    def __init__(self, file, args, timer, isImport):
+    def __init__(self, file, args, timer):
         self.file = file
         self.args = args
         self.timer = timer
-        self.isImport = isImport
-        self.exportedFiles = []
 
     def run(self, xContext, connection):
         print("Loading document: " + self.file)
@@ -416,12 +400,10 @@ class LoadFileTest:
             t = threading.Timer(self.timer.getImportTime(), alarm_handler, args)
             t.start()
             xDoc = loadFromURL(xContext, url, t, self.args.component)
-            print("doc loaded")
             t.cancel()
             if xDoc:
-                exportTest = ExportFileTest(xDoc, self.file, self.args, self.timer, self.isImport)
+                exportTest = ExportFileTest(xDoc, self.file, self.args, self.timer)
                 exportTest.run(connection)
-                self.exportedFiles = exportTest.exportedFiles
 
         except pyuno.getClass("com.sun.star.beans.UnknownPropertyException"):
             print("caught UnknownPropertyException " + self.file)
@@ -450,7 +432,6 @@ class LoadFileTest:
                 if xDoc:
                     t = threading.Timer(10, alarm_handler, args)
                     t.start()
-                    print("closing document")
                     xDoc.close(True)
                     t.cancel()
             except pyuno.getClass("com.sun.star.beans.UnknownPropertyException"):
@@ -465,7 +446,6 @@ class LoadFileTest:
                     pass
                 connection.tearDown()
                 connection.setUp()
-            print("...done with: " + self.file)
 
 class NormalTimer:
     def __init__(self):
@@ -477,24 +457,19 @@ class NormalTimer:
     def getExportTime(self):
         return 180
 
-def runLoadFileTests(arguments, files, isImport):
+def runLoadFileTests(arguments, files):
 
     connection = PersistentConnection(arguments)
-    exportedFiles = []
     try:
         files.sort()
         tests = []
         timer = NormalTimer()
 
-        tests.extend( (LoadFileTest(file, arguments, timer, isImport) for file in files) )
+        tests.extend( (LoadFileTest(file, arguments, timer) for file in files) )
         runConnectionTests(connection, simpleInvoke, tests)
-
-        exportedFiles = [item for sublist in tests for item in sublist.exportedFiles]
 
     finally:
         connection.kill()
-
-    return exportedFiles
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
@@ -505,16 +480,6 @@ if __name__ == "__main__":
     extensions = config.config[arguments.type][arguments.component]["import"]
     importFiles = getFiles(arguments.dir, extensions)
 
-    if importFiles:
-        exportedFiles = runLoadFileTests(arguments, importFiles, True)
-
-    if exportedFiles:
-        # Convert the roundtripped files to PDF
-        runLoadFileTests(arguments, exportedFiles, False)
-
-    # Remove the exported files to save some disk space. No longer needed
-    for fileName in exportedFiles:
-        if os.path.isfile(fileName):
-            os.remove(fileName)
+    runLoadFileTests(arguments, importFiles)
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:
