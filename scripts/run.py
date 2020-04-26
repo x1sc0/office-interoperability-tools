@@ -49,7 +49,7 @@ if __name__ == "__main__":
         os.makedirs(outDir)
 
     #Step 1: Convert files with LibreOffice
-    process = Popen(['python3', scriptsPath + '/convall.py',
+    process = Popen(['python3', scriptsPath + '/unoconv.py',
         '--soffice=' + arguments.soffice,
         '--type=' + arguments.type,
         '--component=' + arguments.component,
