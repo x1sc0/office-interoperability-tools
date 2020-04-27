@@ -16,6 +16,7 @@ import parser
 import os
 from subprocess import Popen, PIPE
 import signal
+import config
 
 def kill_soffice():
     p = Popen(['ps', '-A'], stdout=PIPE)
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     #Step 2: Convert files with MSO
     if arguments.type == 'ooxml':
         for extension in config.config['ooxml'][arguments.component]["import"]:
-            process = Popen(['python3', scriptsPath + '/msooconv.py',
+            process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
                 '--dir=' + arguments.reference,
@@ -72,7 +73,7 @@ if __name__ == "__main__":
     #Step 3: Convert the roundtripped files from step 1 to PDF with MSO
     if arguments.type == 'ooxml':
         for extension in config.config['ooxml'][arguments.component]["export"]:
-            process = Popen(['python3', scriptsPath + '/msooconv.py',
+            process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
                 '--dir=' + arguments.dir,
@@ -80,7 +81,7 @@ if __name__ == "__main__":
             process.communicate()
 
     #Step 4: Get rid of these files once converted to PDF
-    for fileName in os.listdir(arguments.dir):
+    for fileName in os.listdir(arguments.outdir):
         for extension in config.config[arguments.type][arguments.component]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension and ext != 'pdf':

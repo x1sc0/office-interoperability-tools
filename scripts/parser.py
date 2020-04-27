@@ -60,7 +60,7 @@ class CommonParser(argparse.ArgumentParser):
         if hasattr(arguments, 'dir'):
             self.check_path(arguments.dir)
 
-        if hasattr(arguments, 'outdir'):
+        if hasattr(arguments, 'reference'):
             self.check_path(arguments.reference)
 
         if hasattr(arguments, 'outdir'):
@@ -79,7 +79,7 @@ class CommonParser(argparse.ArgumentParser):
             if arguments.type not in types:
                 self.error(arguments.type + " is an invalid type")
 
-            if arguments.type == "ooxml" and not arguments.wineprefix:
+            if arguments.type == "ooxml" and hasattr(arguments, 'wineprefix') and not arguments.wineprefix:
                 self.error("wineprefix argument is needed when using 'ooxml' type")
 
         if hasattr(arguments, 'component'):
