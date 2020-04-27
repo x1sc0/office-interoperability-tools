@@ -20,8 +20,11 @@ types = ["odf", "ooxml"]
 
 arguments_descriptions = {
         "--soffice": "soffice instance to connect to",
+        "--reference": "Reference directory",
         "--dir": "Input directory",
         "--outdir": "Output directory",
+        "--wineprefix": "Path to wineprefix",
+        "--extension": "Extension of files to be converted to PDF",
         "--type": "Mimetype to be used. Options: " + \
                     " ".join("[" + x + "]" for x in types),
         "--component": "Component to be used. Options: " + \
@@ -40,25 +43,44 @@ class CommonParser(argparse.ArgumentParser):
             self.add_argument(arg, required=True,
                 help=arguments_descriptions[arg])
 
+    def add_optional_arguments(self, args):
+        for arg in args:
+            self.add_argument(arg, required=False,
+                help=arguments_descriptions[arg])
+
+    def check_path(self, path):
+        if not os.path.exists(path):
+            self.error(path + " doesn't exists")
+
+        if not os.path.isabs(path):
+            self.error(path + " is not an absolute path")
+
     def check_values(self):
         arguments = self.parse_args()
         if hasattr(arguments, 'dir'):
-            if not os.path.exists(arguments.dir):
-                self.error(arguments.dir + " doesn't exists")
+            self.check_path(arguments.dir)
 
         if hasattr(arguments, 'outdir'):
-            if not os.path.exists(arguments.outdir):
-                self.error(arguments.outdir + " doesn't exists")
+            self.check_path(arguments.reference)
+
+        if hasattr(arguments, 'outdir'):
+            self.check_path(arguments.outdir)
+
+        if hasattr(arguments, 'wineprefix') and arguments.wineprefix:
+            self.check_path(arguments.wineprefix)
 
         if hasattr(arguments, 'soffice'):
-            if not os.path.exists(arguments.soffice):
-                self.error(arguments.soffice + " doesn't exists")
+            self.check_path(arguments.soffice)
+
             if not arguments.soffice.endswith('/soffice'):
                 self.error(arguments.soffice + " should end with '/soffice'")
 
         if hasattr(arguments, 'type'):
             if arguments.type not in types:
                 self.error(arguments.type + " is an invalid type")
+
+            if arguments.type == "ooxml" and not arguments.wineprefix:
+                self.error("wineprefix argument is needed when using 'ooxml' type")
 
         if hasattr(arguments, 'component'):
             if arguments.component not in  components:

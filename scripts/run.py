@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- tab-width: 4; indent-tabs-mode: nil; py-indent-offset: 4 -*-
 # Version: MPL 1.1 / GPLv3+ / LGPLv3+
 #
@@ -27,8 +28,9 @@ def kill_soffice():
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--soffice', '--type', '--component', '--dir', '--outdir'])
+    parser.add_arguments(['--soffice', '--type', '--reference', '--component', '--dir', '--outdir'])
 
+    parser.add_optional_arguments(['--wineprefix'])
     arguments = parser.check_values()
 
     kill_soffice()
@@ -57,11 +59,30 @@ if __name__ == "__main__":
         '--outdir=' + outDir])
     process.communicate()
 
-    #Step 2: Convert to roundtripped files to PDF with MSO
-    for fileName in os.listdir(outDir):
-        if os.path.splitext(fileName)[1] != '.pdf':
-            process = Popen(['wine', 'OfficeConvert', '--format=pdf', fileName])
+    #Step 2: Convert files with MSO
+    if arguments.type == 'ooxml':
+        for extension in config.config['ooxml'][arguments.component]["import"]:
+            process = Popen(['python3', scriptsPath + '/msooconv.py',
+                '--extension=' + extension,
+                '--wineprefix=' + arguments.wineprefix,
+                '--dir=' + arguments.reference,
+                '--outdir=' + outDir])
             process.communicate()
-            # No longer needed, we can remove it to save some space
-            #os.remove(fileName)
+
+    #Step 3: Convert the roundtripped files from step 1 to PDF with MSO
+    if arguments.type == 'ooxml':
+        for extension in config.config['ooxml'][arguments.component]["export"]:
+            process = Popen(['python3', scriptsPath + '/msooconv.py',
+                '--extension=' + extension,
+                '--wineprefix=' + arguments.wineprefix,
+                '--dir=' + arguments.dir,
+                '--outdir=' + outDir])
+            process.communicate()
+
+    #Step 4: Get rid of these files once converted to PDF
+    for fileName in os.listdir(arguments.dir):
+        for extension in config.config[arguments.type][arguments.component]["export"]:
+            ext = os.path.splitext(fileName)[1][1:]
+            if ext == extension and ext != 'pdf':
+                os.remove(arguments.dir + fileName)
 
