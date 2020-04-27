@@ -38,19 +38,19 @@ def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
     baseName = os.path.splitext(fileName)[0]
     outputName = arguments.outdir + baseName + ".pdf"
-    os.chdir(arguments.dir)
+    os.chdir(arguments.indir)
     try:
         run(['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=60)
         os.rename(tmpName, outputName)
-        print("Converted " + arguments.dir + fileName + " to " + outputName)
+        print("Converted " + arguments.indir + fileName + " to " + outputName)
 
     except TimeoutExpired as e:
-        print("TIMEOUT: Converting " + arguments.dir + fileName + " to " + outputName)
+        print("TIMEOUT: Converting " + arguments.indir + fileName + " to " + outputName)
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--dir', '--outdir', '--extension', '--wineprefix'])
+    parser.add_arguments(['--indir', '--outdir', '--extension', '--wineprefix'])
 
     arguments = parser.check_values()
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     chunkSplit = cpuCount * 16
     listFiles = []
 
-    for fileName in os.listdir(arguments.dir):
+    for fileName in os.listdir(arguments.indir):
         if fileName.endswith('.' + arguments.extension):
             baseName = os.path.splitext(fileName)[0]
             outputName = arguments.outdir + baseName + ".pdf"

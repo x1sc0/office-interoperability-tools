@@ -500,12 +500,12 @@ def runLoadFileTests(arguments, files, isImport):
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--soffice', '--type', '--component', '--dir', '--outdir'])
+    parser.add_arguments(['--soffice', '--type', '--component', '--indir', '--outdir'])
 
     arguments = parser.check_values()
 
     extensions = config.config[arguments.type][arguments.component]["import"]
-    importFiles = getFiles(arguments.dir, extensions)
+    importFiles = getFiles(arguments.indir, extensions)
 
     if importFiles:
         exportedFiles = runLoadFileTests(arguments, importFiles, True)

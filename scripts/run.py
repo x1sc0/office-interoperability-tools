@@ -29,7 +29,7 @@ def kill_soffice():
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--soffice', '--type', '--reference', '--component', '--dir', '--outdir'])
+    parser.add_arguments(['--soffice', '--type', '--reference', '--component', '--indir', '--outdir'])
 
     parser.add_optional_arguments(['--wineprefix'])
     arguments = parser.check_values()
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         '--soffice=' + arguments.soffice,
         '--type=' + arguments.type,
         '--component=' + arguments.component,
-        '--dir=' + arguments.dir,
+        '--indir=' + arguments.indir,
         '--outdir=' + outDir])
     process.communicate()
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
-                '--dir=' + arguments.reference,
+                '--indir=' + arguments.reference,
                 '--outdir=' + outDir])
             process.communicate()
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
-                '--dir=' + arguments.dir,
+                '--indir=' + arguments.indir,
                 '--outdir=' + outDir])
             process.communicate()
 
@@ -85,5 +85,4 @@ if __name__ == "__main__":
         for extension in config.config[arguments.type][arguments.component]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension and ext != 'pdf':
-                os.remove(arguments.dir + fileName)
-
+                os.remove(arguments.indir + fileName)
