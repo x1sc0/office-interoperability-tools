@@ -14,7 +14,7 @@
 
 import os
 import parser
-from subprocess import Popen, PIPE, TimeoutExpired, DEVNULL
+from subprocess import Popen, PIPE, TimeoutExpired, DEVNULL, run
 import signal
 import string
 import random
@@ -35,23 +35,18 @@ def X_is_running():
     return p.returncode == 0
 
 def launch_OfficeConverter(fileName, arguments):
-    baseName = os.path.splitext(fileName)[0]
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
+    baseName = os.path.splitext(fileName)[0]
     outputName = arguments.outdir + baseName + ".pdf"
-    if not os.path.exists(outputName):
-        os.chdir(arguments.dir)
-        process = Popen(
-                ['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
-                stdout=DEVNULL, stderr=DEVNULL)
-        try:
-            process.communicate(timeout=60)
-            os.rename(tmpName, outputName)
-            print("Converted " + arguments.dir + fileName + " to " + outputName)
+    os.chdir(arguments.dir)
+    try:
+        run(['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
+                stdout=DEVNULL, stderr=DEVNULL, timeout=60)
+        os.rename(tmpName, outputName)
+        print("Converted " + arguments.dir + fileName + " to " + outputName)
 
-        except TimeoutExpired as e:
-            p1.kill()
-            p1.communicate()
-            print("TIMEOUT: Converting " + arguments.dir + fileName + " to " + outputName)
+    except TimeoutExpired as e:
+        print("TIMEOUT: Converting " + arguments.dir + fileName + " to " + outputName)
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
@@ -70,15 +65,26 @@ if __name__ == "__main__":
     os.environ["WINEPREFIX"] = arguments.wineprefix
 
     cpuCount = multiprocessing.cpu_count()
-    pool = multiprocessing.Pool(cpuCount)
+    chunkSplit = cpuCount * 16
+    listFiles = []
 
     for fileName in os.listdir(arguments.dir):
-        extension = os.path.splitext(fileName)[1][1:]
-        if extension == arguments.extension:
+        if fileName.endswith('.' + arguments.extension):
+            baseName = os.path.splitext(fileName)[0]
+            outputName = arguments.outdir + baseName + ".pdf"
+            if not os.path.exists(outputName):
+                listFiles.append(fileName)
+
+    chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
+    for chunk in chunks:
+        pool = multiprocessing.Pool(cpuCount)
+        for fileName in chunk:
             pool.apply_async(launch_OfficeConverter, args=(fileName, arguments))
 
-    pool.close()
-    pool.join()
+        pool.close()
+        pool.join()
+
+        kill_mso()
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:
