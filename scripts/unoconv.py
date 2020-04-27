@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- tab-width: 4; indent-tabs-mode: nil; py-indent-offset: 4 -*-
 # Version: MPL 1.1 / GPLv3+ / LGPLv3+
 #
@@ -371,7 +372,8 @@ class ExportFileTest:
                     fileName = filePath + '.import.pdf'
                 else:
                     fileName = filePath + "." + extension
-                    self.exportedFiles.append(fileName)
+                    if extension in config.config['odf'][self.args.component]["import"]:
+                        self.exportedFiles.append(fileName)
 
                 # Document has been roundtripped to PDF, no need to continue
                 if os.path.exists(fileName) or os.path.exists(fileName + '.export.pdf'):
@@ -509,7 +511,7 @@ if __name__ == "__main__":
         exportedFiles = runLoadFileTests(arguments, importFiles, True)
 
     if exportedFiles:
-        # Convert the roundtripped files to PDF
+        # Convert the roundtripped odf files to PDF
         runLoadFileTests(arguments, exportedFiles, False)
 
     # Remove the exported files to save some disk space. No longer needed
