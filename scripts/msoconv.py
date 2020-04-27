@@ -75,16 +75,19 @@ if __name__ == "__main__":
             if not os.path.exists(outputName):
                 listFiles.append(fileName)
 
-    chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
-    for chunk in chunks:
-        pool = multiprocessing.Pool(cpuCount)
-        for fileName in chunk:
-            pool.apply_async(launch_OfficeConverter, args=(fileName, arguments))
+    if listFiles:
+        chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
+        for chunk in chunks:
+            pool = multiprocessing.Pool(cpuCount)
+            for fileName in chunk:
+                pool.apply_async(launch_OfficeConverter, args=(fileName, arguments))
 
-        pool.close()
-        pool.join()
+            pool.close()
+            pool.join()
 
-        kill_mso()
+            kill_mso()
+    else:
+        print("msoconv:py: Nothing to be converted")
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:

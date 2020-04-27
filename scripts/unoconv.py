@@ -510,7 +510,7 @@ if __name__ == "__main__":
     if importFiles:
         exportedFiles = runLoadFileTests(arguments, importFiles, True)
     else:
-        print("No files to be converted")
+        print("unoconv.py: Nothing to be converted")
         sys.exit(2)
 
     if exportedFiles:
