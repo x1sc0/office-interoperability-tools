@@ -19,6 +19,7 @@ import signal
 import string
 import random
 import multiprocessing
+import shutil
 
 def kill_mso():
     p = Popen(['ps', '-A'], stdout=PIPE)
@@ -36,16 +37,18 @@ def X_is_running():
 
 def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
-    outputName = arguments.outdir + fileName + ".pdf"
-    os.chdir(arguments.indir)
+    inputName = os.path.join(arguments.indir, fileName)
+    outputName = os.path.join(arguments.outdir, fileName + ".pdf")
+    shutil.copyfile(inputName, '/tmp/' + fileName)
+    os.chdir('/tmp/')
     try:
         run(['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=60)
-        os.rename(tmpName, outputName)
-        print("Converted " + arguments.indir + fileName + " to " + outputName)
+        shutil.move('/tmp/' + tmpName, outputName)
+        print("Converted " + inputName + " to " + outputName)
 
     except TimeoutExpired as e:
-        print("TIMEOUT: Converting " + arguments.indir + fileName + " to " + outputName)
+        print("TIMEOUT: Converting " + inputName + " to " + outputName)
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
@@ -69,7 +72,7 @@ if __name__ == "__main__":
 
     for fileName in os.listdir(arguments.indir):
         if fileName.endswith('.' + arguments.extension):
-            outputName = arguments.outdir + fileName + ".pdf"
+            outputName = os.path.join(arguments.outdir, fileName + ".pdf")
             if not os.path.exists(outputName):
                 listFiles.append(fileName)
 
