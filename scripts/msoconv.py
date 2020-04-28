@@ -36,8 +36,7 @@ def X_is_running():
 
 def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
-    baseName = os.path.splitext(fileName)[0]
-    outputName = arguments.outdir + baseName + ".pdf"
+    outputName = arguments.outdir + fileName + ".pdf"
     os.chdir(arguments.indir)
     try:
         run(['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
@@ -70,8 +69,7 @@ if __name__ == "__main__":
 
     for fileName in os.listdir(arguments.indir):
         if fileName.endswith('.' + arguments.extension):
-            baseName = os.path.splitext(fileName)[0]
-            outputName = arguments.outdir + baseName + ".pdf"
+            outputName = arguments.outdir + fileName + ".pdf"
             if not os.path.exists(outputName):
                 listFiles.append(fileName)
 
