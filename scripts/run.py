@@ -66,22 +66,24 @@ if __name__ == "__main__":
             process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
-                '--indir=' + arguments.reference,
-                '--outdir=' + outDir])
+                '--indir=' + arguments.indir,
+                '--outdir=' + arguments.reference])
             process.communicate()
 
     #Step 3: Convert the roundtripped files from step 1 to PDF with MSO
     if arguments.type == 'ooxml':
         for extension in config.config['ooxml'][arguments.component]["export"]:
-            process = Popen(['python3', scriptsPath + '/msoconv.py',
-                '--extension=' + extension,
-                '--wineprefix=' + arguments.wineprefix,
-                '--indir=' + arguments.indir,
-                '--outdir=' + outDir])
-            process.communicate()
+            #Ignore pdf
+            if extension != 'pdf':
+                process = Popen(['python3', scriptsPath + '/msoconv.py',
+                    '--extension=' + extension,
+                    '--wineprefix=' + arguments.wineprefix,
+                    '--indir=' + outDir,
+                    '--outdir=' + outDir])
+                process.communicate()
 
     #Step 4: Get rid of these files once converted to PDF
-    for fileName in os.listdir(arguments.outdir):
+    for fileName in os.listdir(outDir):
         for extension in config.config[arguments.type][arguments.component]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension and ext != 'pdf':
