@@ -337,12 +337,11 @@ def exportDoc(xDoc, fileName, filterName, connection, timer):
     print("xDoc.storeToURL " + fileURL + " " + filterName + "\n")
 
 class ExportFileTest:
-    def __init__(self, xDoc, filename, args, timer, isImport):
+    def __init__(self, xDoc, filename, args, timer):
         self.xDoc = xDoc
         self.filename = filename
         self.args = args
         self.timer = timer
-        self.isImport = isImport
         self.exportedFiles = []
 
     def run(self, connection):
@@ -360,48 +359,31 @@ class ExportFileTest:
                 "pdf": self.args.component + "_pdf_Export"
                 }
 
-        fileBaseName = os.path.basename(self.filename)
+        fileNameWithExtension = os.path.basename(self.filename)
+        filePath = self.args.outdir + '/' + fileNameWithExtension
+        formats = config.config[self.args.type][self.args.component]["export"]
+        for extension in formats:
 
-        if self.isImport:
-            fileNameNoExtension = os.path.splitext(fileBaseName)[0]
-            filePath = self.args.outdir + '/' + fileNameNoExtension
-            formats = config.config[self.args.type][self.args.component]["export"]
-            for extension in formats:
+            fileName = filePath + "." + extension
+            if extension in config.config['odf'][self.args.component]["import"]:
+                self.exportedFiles.append(fileName)
 
-                if extension == "pdf":
-                    fileName = filePath + '.import.pdf'
-                else:
-                    fileName = filePath + "." + extension
-                    if extension in config.config['odf'][self.args.component]["import"]:
-                        self.exportedFiles.append(fileName)
+            if os.path.exists(fileName):
+                continue
 
-                # Document has been roundtripped to PDF, no need to continue
-                if os.path.exists(fileName) or os.path.exists(fileName + '.export.pdf'):
-                    continue
+            filterName = filterNames[extension]
 
-                filterName = filterNames[extension]
-
-                xExportedDoc = exportDoc(
-                    self.xDoc, fileName, filterName, connection, self.timer)
-                if xExportedDoc:
-                    xExportedDoc.close(True)
-        else:
-            fileName = self.args.outdir + '/' + fileBaseName + '.export.pdf'
-
-            if not os.path.exists(fileName):
-                filterName = filterNames['pdf']
-
-                xExportedDoc = exportDoc(
-                    self.xDoc, fileName, filterName, connection, self.timer)
-                if xExportedDoc:
-                    xExportedDoc.close(True)
+            xExportedDoc = exportDoc(
+                self.xDoc, fileName, filterName, connection, self.timer)
+            if xExportedDoc:
+                xExportedDoc.close(True)
 
 class LoadFileTest:
-    def __init__(self, file, args, timer, isImport):
+    def __init__(self, file, args, timer, doExport):
         self.file = file
         self.args = args
         self.timer = timer
-        self.isImport = isImport
+        self.doExport = doExport
         self.exportedFiles = []
 
     def run(self, xContext, connection):
@@ -420,8 +402,8 @@ class LoadFileTest:
             xDoc = loadFromURL(xContext, url, t, self.args.component)
             print("doc loaded")
             t.cancel()
-            if xDoc:
-                exportTest = ExportFileTest(xDoc, self.file, self.args, self.timer, self.isImport)
+            if xDoc and self.doExport:
+                exportTest = ExportFileTest(xDoc, self.file, self.args, self.timer)
                 exportTest.run(connection)
                 self.exportedFiles = exportTest.exportedFiles
 
@@ -479,7 +461,7 @@ class NormalTimer:
     def getExportTime(self):
         return 180
 
-def runLoadFileTests(arguments, files, isImport):
+def runLoadFileTests(arguments, files, doExport):
 
     connection = PersistentConnection(arguments)
     exportedFiles = []
@@ -488,7 +470,7 @@ def runLoadFileTests(arguments, files, isImport):
         tests = []
         timer = NormalTimer()
 
-        tests.extend( (LoadFileTest(file, arguments, timer, isImport) for file in files) )
+        tests.extend( (LoadFileTest(file, arguments, timer, doExport) for file in files) )
         runConnectionTests(connection, simpleInvoke, tests)
 
         exportedFiles = [item for sublist in tests for item in sublist.exportedFiles]
