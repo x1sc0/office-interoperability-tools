@@ -360,23 +360,18 @@ class ExportFileTest:
                 "pdf": self.args.component + "_pdf_Export"
                 }
 
-        fileBaseName = os.path.basename(self.filename)
+        fileNameWithExtension = os.path.basename(self.filename)
+        filePath = os.path.join(self.args.outdir, fileNameWithExtension)
 
         if self.isImport:
-            fileNameNoExtension = os.path.splitext(fileBaseName)[0]
-            filePath = self.args.outdir + '/' + fileNameNoExtension
             formats = config.config[self.args.type][self.args.component]["export"]
             for extension in formats:
 
-                if extension == "pdf":
-                    fileName = filePath + '.import.pdf'
-                else:
-                    fileName = filePath + "." + extension
-                    if extension in config.config['odf'][self.args.component]["import"]:
-                        self.exportedFiles.append(fileName)
+                fileName = filePath + "." + extension
+                if extension in config.config['odf'][self.args.component]["import"]:
+                    self.exportedFiles.append(fileName)
 
-                # Document has been roundtripped to PDF, no need to continue
-                if os.path.exists(fileName) or os.path.exists(fileName + '.export.pdf'):
+                if os.path.exists(fileName):
                     continue
 
                 filterName = filterNames[extension]
@@ -386,7 +381,7 @@ class ExportFileTest:
                 if xExportedDoc:
                     xExportedDoc.close(True)
         else:
-            fileName = self.args.outdir + '/' + fileBaseName + '.export.pdf'
+            fileName = filePath + '.pdf'
 
             if not os.path.exists(fileName):
                 filterName = filterNames['pdf']
