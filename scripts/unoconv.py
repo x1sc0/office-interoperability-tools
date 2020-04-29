@@ -365,8 +365,6 @@ class ExportFileTest:
 
         if self.isImport:
             formats = config.config[self.args.type][self.args.component]["export"]
-            # Also export to PDF
-            formats.append("pdf")
 
             for extension in formats:
 
@@ -377,7 +375,7 @@ class ExportFileTest:
                 else:
                     self.exportedFiles.append(fileName)
 
-                if os.path.exists(fileName):
+                if os.path.exists(fileName) or os.path.exists(fileName + ".pdf"):
                     continue
 
                 filterName = filterNames[extension]
