@@ -87,4 +87,4 @@ if __name__ == "__main__":
         for extension in config.config[arguments.type][arguments.component]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension and ext != 'pdf':
-                os.remove(arguments.indir + fileName)
+                os.remove(os.path.join(outDir, fileName))
