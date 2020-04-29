@@ -114,9 +114,9 @@ def pdf2array(pdffile, res=300):
         return None, None
 
     imgfile = TiffFile(tname)
-    pages = [p.asarray() for p in imgfile.pages[:5]]    # first five pages only
+    pages = [p.asarray() for p in imgfile.pages[:10]]    # first ten pages only
 
-    shapes = [p.shape for p in imgfile.pages[:5]]
+    shapes = [p.shape for p in imgfile.pages[:10]]
     os.remove(tname)
     return pages, shapes
 
