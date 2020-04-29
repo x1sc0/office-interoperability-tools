@@ -87,19 +87,22 @@ if __name__ == "__main__":
         for extension in config.config[arguments.type][arguments.component]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension:
+                print("Removing " + os.path.join(outDir, fileName))
                 os.remove(os.path.join(outDir, fileName))
 
     #Step 5 Use failed.pdf if any file couldn't be converted
     failedPdfPath = os.path.join(scriptsPath, 'failed.pdf')
     for i in os.listdir(arguments.indir):
         if not i.startswith(".~lock."):
-            importNamePath = os.path.join(outDir, i + ".import.pdf"]))
+            importNamePath = os.path.join(outDir, i + ".import.pdf")
             if not os.path.exists(importNamePath):
+                print(importNamePath + " doesn't exists. Using failed.pdf")
                 shutil.copyfile(failedPdfPath, importNamePath)
 
             for extension in config.config[arguments.type][arguments.component]["export"]:
-                exportNamePath = os.path.join(outDir, ".".join([i, extension, "pdf"]))
+                exportNamePath = os.path.join(outDir, ".".join([i, extension, "pdf"]) )
 
                 if not os.path.exists(exportNamePath):
+                    print(exportNamePath + " doesn't exists. Using failed.pdf")
                     shutil.copyfile(failedPdfPath, exportNamePath)
 
