@@ -17,6 +17,7 @@ import os
 from subprocess import Popen, PIPE
 import signal
 import config
+import shutil
 
 def kill_soffice():
     p = Popen(['ps', '-A'], stdout=PIPE)
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     #Step 3: Convert the roundtripped files from step 1 to PDF with MSO
     if arguments.type == 'ooxml':
         for extension in config.config['ooxml'][arguments.component]["export"]:
-            if extension not in config.config["ooxml"][self.args.component]["roundtrip"]:
+            if extension not in config.config["ooxml"][arguments.component]["roundtrip"]:
                 process = Popen(['python3', scriptsPath + '/msoconv.py',
                     '--extension=' + extension,
                     '--wineprefix=' + arguments.wineprefix,
@@ -87,3 +88,18 @@ if __name__ == "__main__":
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension:
                 os.remove(os.path.join(outDir, fileName))
+
+    #Step 5 Use failed.pdf if any file couldn't be converted
+    failedPdfPath = os.path.join(scriptsPath, 'failed.pdf')
+    for i in os.listdir(arguments.indir):
+        if not i.startswith(".~lock."):
+            importNamePath = os.path.join(outDir, ".".join([i, "pdf"]))
+            if not os.path.exists(importNamePath):
+                shutil.copyfile(failedPdfPath, importNamePath)
+
+            for extension in config.config[arguments.type][arguments.component]["export"]:
+                exportNamePath = os.path.join(outDir, ".".join([i, extension, "pdf"]))
+
+                if not os.path.exists(exportNamePath):
+                    shutil.copyfile(failedPdfPath, exportNamePath)
+
