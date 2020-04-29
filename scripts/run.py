@@ -106,3 +106,9 @@ if __name__ == "__main__":
                     print(exportNamePath + " doesn't exists. Using failed.pdf")
                     shutil.copyfile(failedPdfPath, exportNamePath)
 
+    #Step 6: Compare the PDFs
+    process = Popen(['python3', scriptsPath + '/docompare.py',
+        '--indir=' + outDir,
+        '--reference=' + arguments.reference])
+    process.communicate()
+
