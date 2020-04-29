@@ -3,11 +3,11 @@ config = {
     {
         "writer": {
             "import": ["doc", "docx", "rtf"],
-            "export": ["pdf", "doc", "docx", "rtf", "odt"]
+            "export": ["doc", "docx", "rtf", "odt"]
         },
         "impress": {
             "import": ["ppt", "pptx"],
-            "export": ["pdf", "ppt", "pptx", "odp"]
+            "export": ["ppt", "pptx", "odp"]
         }
     },
     "odf":

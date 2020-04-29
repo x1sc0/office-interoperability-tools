@@ -365,6 +365,9 @@ class ExportFileTest:
 
         if self.isImport:
             formats = config.config[self.args.type][self.args.component]["export"]
+            # Also export to PDF
+            formats.append("pdf")
+
             for extension in formats:
 
                 fileName = filePath + "." + extension
