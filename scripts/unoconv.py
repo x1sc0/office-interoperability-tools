@@ -365,10 +365,16 @@ class ExportFileTest:
 
         if self.isImport:
             formats = config.config[self.args.type][self.args.component]["export"]
+            # Also export to PDF
+            if 'pdf' not in formats:
+                formats.append("pdf")
 
             for extension in formats:
+                if extension == "pdf":
+                    fileName = filePath + ".import.pdf"
+                else:
+                    fileName = filePath + "." + extension
 
-                fileName = filePath + "." + extension
                 if arguments.type == "ooxml":
                     if extension in config.config["ooxml"][self.args.component]["roundtrip"]:
                         self.exportedFiles.append(fileName)

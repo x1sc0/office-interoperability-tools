@@ -93,7 +93,7 @@ if __name__ == "__main__":
     failedPdfPath = os.path.join(scriptsPath, 'failed.pdf')
     for i in os.listdir(arguments.indir):
         if not i.startswith(".~lock."):
-            importNamePath = os.path.join(outDir, ".".join([i, "pdf"]))
+            importNamePath = os.path.join(outDir, i + ".import.pdf"]))
             if not os.path.exists(importNamePath):
                 shutil.copyfile(failedPdfPath, importNamePath)
 
