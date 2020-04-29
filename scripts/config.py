@@ -3,11 +3,13 @@ config = {
     {
         "writer": {
             "import": ["doc", "docx", "rtf"],
-            "export": ["doc", "docx", "rtf", "odt"]
+            "export": ["doc", "docx", "rtf", "odt"],
+            "roundtrip" : ["odt"]
         },
         "impress": {
             "import": ["ppt", "pptx"],
-            "export": ["ppt", "pptx", "odp"]
+            "export": ["ppt", "pptx", "odp"],
+            "roundtrip" : ["odp"]
         }
     },
     "odf":

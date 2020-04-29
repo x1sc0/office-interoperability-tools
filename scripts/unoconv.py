@@ -371,7 +371,10 @@ class ExportFileTest:
             for extension in formats:
 
                 fileName = filePath + "." + extension
-                if extension in config.config['odf'][self.args.component]["import"]:
+                if arguments.type == "ooxml":
+                    if extension in config.config["ooxml"][self.args.component]["roundtrip"]:
+                        self.exportedFiles.append(fileName)
+                else:
                     self.exportedFiles.append(fileName)
 
                 if os.path.exists(fileName):
