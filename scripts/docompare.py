@@ -690,6 +690,6 @@ if __name__=="__main__":
                              not os.path.exists(outFile + '-p.pdf') and \
                              not os.path.exists(outFile + '-s.pdf') and \
                              not os.path.exists(outFile + '-z.pdf'):
-                        future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile), timeout=100)
+                        future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile), timeout=300)
                         future.add_done_callback(task_done)
 
