@@ -26,6 +26,8 @@ from tifffile import TiffFile
 from scipy import ndimage
 import parser
 import multiprocessing
+from pebble import ProcessPool
+from concurrent.futures import TimeoutError
 
 class DoException(Exception):
     def __init__(self, what):
@@ -659,6 +661,14 @@ def mainfunc(referenceFile, inFile, outFile):
     except DoException as e:
         print("\n" + e.what + " (" + referenceFile + ", " + inFile + ")")
 
+def task_done(future):
+    try:
+        result = future.result()  # blocks until results are ready
+    except TimeoutError as error:
+        print("TIMEOUT")
+    except Exception as error:
+        print("Function raised %s" % error)
+
 if __name__=="__main__":
     parser = parser.CommonParser()
     parser.add_arguments(['--input', '--reference'])
@@ -666,21 +676,20 @@ if __name__=="__main__":
     arguments = parser.check_values()
 
     cpuCount = multiprocessing.cpu_count()
-    pool = multiprocessing.Pool(cpuCount)
 
-    for fileName in os.listdir(arguments.input):
-        extension = os.path.splitext(fileName)[1][1:]
-        if extension == 'pdf':
-            fileNamePath = os.path.join(arguments.input, fileName)
-            fileNameWithoutPDF = os.path.splitext(fileName)[0]
-            referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
-            if os.path.exists(referencePath):
-                outFile = fileNamePath + '-pair'
-                if not os.path.exists(outFile + '-l.pdf') and \
-                         not os.path.exists(outFile + '-p.pdf') and \
-                         not os.path.exists(outFile + '-s.pdf') and \
-                         not os.path.exists(outFile + '-z.pdf'):
-                    pool.apply_async(mainfunc, args=(referencePath, fileNamePath, outFile))
+    with ProcessPool(cpuCount) as pool:
+        for fileName in os.listdir(arguments.input):
+            extension = os.path.splitext(fileName)[1][1:]
+            if extension == 'pdf':
+                fileNamePath = os.path.join(arguments.input, fileName)
+                fileNameWithoutPDF = os.path.splitext(fileName)[0]
+                referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
+                if os.path.exists(referencePath):
+                    outFile = fileNamePath + '-pair'
+                    if not os.path.exists(outFile + '-l.pdf') and \
+                             not os.path.exists(outFile + '-p.pdf') and \
+                             not os.path.exists(outFile + '-s.pdf') and \
+                             not os.path.exists(outFile + '-z.pdf'):
+                        future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile), timeout=100)
+                        future.add_done_callback(task_done)
 
-    pool.close()
-    pool.join()
