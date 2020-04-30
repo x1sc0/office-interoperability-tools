@@ -661,17 +661,17 @@ def mainfunc(referenceFile, inFile, outFile):
 
 if __name__=="__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--indir', '--reference'])
+    parser.add_arguments(['--input', '--reference'])
 
     arguments = parser.check_values()
 
     cpuCount = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(cpuCount)
 
-    for fileName in os.listdir(arguments.indir):
+    for fileName in os.listdir(arguments.input):
         extension = os.path.splitext(fileName)[1][1:]
         if extension == 'pdf':
-            fileNamePath = os.path.join(arguments.indir, fileName)
+            fileNamePath = os.path.join(arguments.input, fileName)
             fileNameWithoutPDF = os.path.splitext(fileName)[0]
             referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
             if os.path.exists(referencePath):

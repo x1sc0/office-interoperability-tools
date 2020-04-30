@@ -21,8 +21,8 @@ types = ["odf", "ooxml"]
 arguments_descriptions = {
         "--soffice": "soffice instance to connect to",
         "--reference": "Reference directory",
-        "--indir": "Input directory",
-        "--outdir": "Output directory",
+        "--input": "Input directory",
+        "--output": "Output directory",
         "--wineprefix": "Path to wineprefix",
         "--extension": "Extension of files to be converted to PDF",
         "--type": "Mimetype to be used. Options: " + \
@@ -57,14 +57,14 @@ class CommonParser(argparse.ArgumentParser):
 
     def check_values(self):
         arguments = self.parse_args()
-        if hasattr(arguments, 'indir'):
-            self.check_path(arguments.indir)
+        if hasattr(arguments, 'input'):
+            self.check_path(arguments.input)
 
         if hasattr(arguments, 'reference'):
             self.check_path(arguments.reference)
 
-        if hasattr(arguments, 'outdir'):
-            self.check_path(arguments.outdir)
+        if hasattr(arguments, 'output'):
+            self.check_path(arguments.output)
 
         if hasattr(arguments, 'wineprefix') and arguments.wineprefix:
             self.check_path(arguments.wineprefix)

@@ -445,10 +445,10 @@ def generate_multi_threading():
         print("DONE with bugtracker " + prefix)
 
 parser = parser.CommonParser()
-parser.add_arguments(['--outdir', '--type'])
+parser.add_arguments(['--output', '--type'])
 arguments = parser.check_values()
 
-folder = arguments.outdir
+folder = arguments.output
 mimetypes = eval(arguments.type)
 
 max_threads = 20 # Number of threads to create, (1 = without multi-threading)

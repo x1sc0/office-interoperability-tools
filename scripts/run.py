@@ -33,8 +33,8 @@ def convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName,
         '--soffice=' + arguments.soffice,
         '--type=' + typeName,
         '--component=' + componentName,
-        '--indir=' + inputPath,
-        '--outdir=' + outputPath])
+        '--input=' + inputPath,
+        '--output=' + outputPath])
     process.communicate()
 
     if testName:
@@ -53,8 +53,8 @@ def convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentN
         process = Popen(['python3', scriptsPath + '/msoconv.py',
             '--extension=' + extension,
             '--wineprefix=' + arguments.wineprefix,
-            '--indir=' + inputPath,
-            '--outdir=' + referencePath])
+            '--input=' + inputPath,
+            '--output=' + referencePath])
         process.communicate()
 
     if testName:
@@ -67,8 +67,8 @@ def convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, testN
             process = Popen(['python3', scriptsPath + '/msoconv.py',
                 '--extension=' + extension,
                 '--wineprefix=' + arguments.wineprefix,
-                '--indir=' + outputPath,
-                '--outdir=' + outputPath])
+                '--input=' + outputPath,
+                '--output=' + outputPath])
             process.communicate()
 
     if testName:
@@ -116,7 +116,7 @@ def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, co
 
 def compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName, testName):
     process = Popen(['python3', scriptsPath + '/docompare.py',
-        '--indir=' + outputPath,
+        '--input=' + outputPath,
         '--reference=' + referencePath])
     process.communicate()
 
@@ -148,8 +148,8 @@ def execute(arguments, isTest):
                 isTest = fileName
 
     else:
-        inputPath = arguments.indir
-        outputPath = os.path.join(os.path.sep, arguments.outdir, arguments.type, arguments.component, version)
+        inputPath = arguments.input
+        outputPath = os.path.join(os.path.sep, arguments.output, arguments.type, arguments.component, version)
         referencePath = arguments.reference
 
     if not os.path.exists(outputPath):
@@ -171,7 +171,7 @@ def execute(arguments, isTest):
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--soffice', '--type', '--reference', '--component', '--indir', '--outdir'])
+    parser.add_arguments(['--soffice', '--type', '--reference', '--component', '--input', '--output'])
 
     parser.add_optional_arguments(['--wineprefix'])
     arguments = parser.check_values()

@@ -361,7 +361,7 @@ class ExportFileTest:
                 }
 
         fileNameWithExtension = os.path.basename(self.filename)
-        filePath = os.path.join(self.args.outdir, fileNameWithExtension)
+        filePath = os.path.join(self.args.output, fileNameWithExtension)
 
         if self.isImport:
             formats = config.config[self.args.type][self.args.component]["export"]
@@ -505,12 +505,12 @@ def runLoadFileTests(arguments, files, isImport):
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--soffice', '--type', '--component', '--indir', '--outdir'])
+    parser.add_arguments(['--soffice', '--type', '--component', '--input', '--output'])
 
     arguments = parser.check_values()
 
     extensions = config.config[arguments.type][arguments.component]["import"]
-    importFiles = getFiles(arguments.indir, extensions)
+    importFiles = getFiles(arguments.input, extensions)
 
     if importFiles:
         exportedFiles = runLoadFileTests(arguments, importFiles, True)

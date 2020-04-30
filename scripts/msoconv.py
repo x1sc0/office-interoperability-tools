@@ -37,8 +37,8 @@ def X_is_running():
 
 def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
-    inputName = os.path.join(arguments.indir, fileName)
-    outputName = os.path.join(arguments.outdir, fileName + ".pdf")
+    inputName = os.path.join(arguments.input, fileName)
+    outputName = os.path.join(arguments.output, fileName + ".pdf")
     shutil.copyfile(inputName, '/tmp/' + fileName)
     os.chdir('/tmp/')
     try:
@@ -52,7 +52,7 @@ def launch_OfficeConverter(fileName, arguments):
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
-    parser.add_arguments(['--indir', '--outdir', '--extension', '--wineprefix'])
+    parser.add_arguments(['--input', '--output', '--extension', '--wineprefix'])
 
     arguments = parser.check_values()
 
@@ -66,9 +66,9 @@ if __name__ == "__main__":
 
     listFiles = []
 
-    for fileName in os.listdir(arguments.indir):
+    for fileName in os.listdir(arguments.input):
         if fileName.endswith('.' + arguments.extension):
-            outputName = os.path.join(arguments.outdir, fileName + ".pdf")
+            outputName = os.path.join(arguments.output, fileName + ".pdf")
             if not os.path.exists(outputName):
                 listFiles.append(fileName)
 
