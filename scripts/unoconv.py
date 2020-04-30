@@ -66,7 +66,7 @@ def getFiles(filesPath, extensions):
     for fileName in os.listdir(filesPath):
         for ext in extensions:
             if fileName.endswith(ext):
-                fileNamePath = filesPath + fileName
+                fileNamePath = os.path.join(filesPath, fileName)
                 if os.path.isfile(fileNamePath):
                     auxNames.append(fileNamePath)
 
