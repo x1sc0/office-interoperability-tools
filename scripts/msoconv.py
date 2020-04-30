@@ -30,11 +30,6 @@ def kill_mso():
             print("Killing process: " + str(pid))
             os.kill(pid, signal.SIGKILL)
 
-def X_is_running():
-    p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-    p.communicate()
-    return p.returncode == 0
-
 def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
     inputName = os.path.join(arguments.input, fileName)
@@ -42,7 +37,7 @@ def launch_OfficeConverter(fileName, arguments):
     shutil.copyfile(inputName, '/tmp/' + fileName)
     os.chdir('/tmp/')
     try:
-        run(['wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
+        run(['xvfb-run', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=60)
         shutil.move('/tmp/' + tmpName, outputName)
         print("Converted " + inputName + " to " + outputName)
@@ -55,12 +50,6 @@ if __name__ == "__main__":
     parser.add_arguments(['--input', '--output', '--extension', '--wineprefix'])
 
     arguments = parser.check_values()
-
-    #Check if X is running, otherwise, simulate one
-    if not X_is_running():
-        p = Popen(["Xvfb", ":0", "-screen", "0", "1024x768x16", "&"], stdout=PIPE, stderr=PIPE)
-        p.communicate()
-        os.environ["DISPLAY"] = ":0.0"
 
     os.environ["WINEPREFIX"] = arguments.wineprefix
 
