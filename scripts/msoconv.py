@@ -56,8 +56,6 @@ if __name__ == "__main__":
 
     arguments = parser.check_values()
 
-    kill_mso()
-
     #Check if X is running, otherwise, simulate one
     if not X_is_running():
         p = Popen(["Xvfb", ":0", "-screen", "0", "1024x768x16", "&"], stdout=PIPE, stderr=PIPE)
@@ -66,8 +64,6 @@ if __name__ == "__main__":
 
     os.environ["WINEPREFIX"] = arguments.wineprefix
 
-    cpuCount = multiprocessing.cpu_count()
-    chunkSplit = cpuCount * 16
     listFiles = []
 
     for fileName in os.listdir(arguments.indir):
@@ -77,18 +73,19 @@ if __name__ == "__main__":
                 listFiles.append(fileName)
 
     if listFiles:
+        cpuCount = multiprocessing.cpu_count()
+        chunkSplit = cpuCount * 16
+
         chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
         for chunk in chunks:
+            kill_mso()
+
             pool = multiprocessing.Pool(cpuCount)
             for fileName in chunk:
                 pool.apply_async(launch_OfficeConverter, args=(fileName, arguments))
 
             pool.close()
             pool.join()
-
-            kill_mso()
-    else:
-        print("msoconv:py: Nothing to be converted")
 
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:
