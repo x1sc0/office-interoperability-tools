@@ -375,12 +375,12 @@ mimetypes = {
 }
 
 ooxml = {
-    'application/vnd.openxmlformatsofficedocument.wordprocessingml.document': 'docx',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
     'application/msword': 'doc',
     'application/rtf': 'rtf',
     'text/rtf': 'rtf',
-    'application/vnd.mspowerpoint': 'ppt',
-    'application/vnd.openxmlformatsofficedocument.presentationml.presentation': 'pptx',
+    'application/vnd.ms-powerpoint': 'ppt',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
     'application/wps-office.doc': 'doc',
     'application/wps-office.docx': 'docx',
     'application/wps-office.ppt': 'ppt',
