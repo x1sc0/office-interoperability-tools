@@ -541,7 +541,6 @@ a4width=210
 a4height=297
 i2mm=25.4    # inch to mm conversion
 bisecting = False
-createOverlayPDF = False
 badThr = 3
 overlayStyle = 'a'  #output all versions by default
 progdesc="Compare two pdf documents and return some statistics"
@@ -564,17 +563,6 @@ def mainfunc(referenceFile, inFile, outFile):
 
         badpagetxt=""
         pages2, shapes2 = pdf2array(inFile, dpi)
-
-        if createOverlayPDF:
-            img1 = makeSingle(pages1, shapes1)
-            img2 = makeSingle(pages2, shapes2)
-            bimg1 = toBin(img1,binthr)
-            bimg2 = toBin(img2,binthr)
-            outimg = genoverlay(bimg1, '', referenceFile, inFile, '', img2=bimg2)
-            rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
-            Image.fromarray(outimg).save(outFile+'.pdf')
-            os.system(exifcmd%(rsltText, outFile+'.pdf'))
-            sys.exit(0)
 
         if pages2 == None:
             img1 = makeSingle(pages1, shapes1)
@@ -670,7 +658,6 @@ def mainfunc(referenceFile, inFile, outFile):
 
     except DoException as e:
         print("\n" + e.what + " (" + referenceFile + ", " + inFile + ")")
-        sys.exit(0)
 
 if __name__=="__main__":
     parser = parser.CommonParser()
