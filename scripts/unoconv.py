@@ -521,10 +521,4 @@ if __name__ == "__main__":
     if exportedFiles:
         # Convert the roundtripped odf files to PDF
         runLoadFileTests(arguments, exportedFiles, False)
-
-    # Remove the exported files to save some disk space. No longer needed
-    for fileName in exportedFiles:
-        if os.path.isfile(fileName):
-            os.remove(fileName)
-
 # vim:set shiftwidth=4 softtabstop=4 expandtab:
