@@ -34,16 +34,17 @@ def launch_OfficeConverter(fileName, arguments):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
     inputName = os.path.join(arguments.input, fileName)
     outputName = os.path.join(arguments.output, fileName + ".pdf")
-    shutil.copyfile(inputName, '/tmp/' + fileName)
+    shutil.copyfile(inputName, os.path.join('/tmp', tmpName))
     os.chdir('/tmp/')
     try:
         run(['xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=60)
-        shutil.move('/tmp/' + tmpName, outputName)
+        shutil.move(os.path.join('/tmp', tmpName), outputName)
         print("Converted " + inputName + " to " + outputName)
 
     except TimeoutExpired as e:
         print("TIMEOUT: Converting " + inputName + " to " + outputName)
+        os.remove(os.path.join('/tmp', tmpName))
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
