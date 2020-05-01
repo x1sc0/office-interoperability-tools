@@ -79,8 +79,9 @@ def getFiles(filesPath, extensions):
 ### UNO utilities ###
 
 class OfficeConnection:
-    def __init__(self, args):
+    def __init__(self, args, tmpdir):
         self.args = args
+        self.tmpdir = tmpdir
         self.soffice = None
         self.socket = None
         self.xContext = None
@@ -91,17 +92,15 @@ class OfficeConnection:
         self.xContext = self.connect(socket)
 
     def bootstrap(self, soffice, socket):
-        #Create temp directory for the user profile
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            userPath = os.path.join(tmpdirname, 'libreoffice/4')
-            os.makedirs(userPath)
+        userPath = os.path.join(self.tmpdir, 'libreoffice/4')
+        os.makedirs(userPath)
 
-            argv = [ soffice, "--accept=" + socket + ";urp",
-                    "-env:UserInstallation=file://" + userPath,
-                    "--quickstart=no", "--nofirststartwizard",
-                    "--norestore", "--nologo", "--headless" ]
-            self.pro = subprocess.Popen(argv)
-            print(self.pro.pid)
+        argv = [ soffice, "--accept=" + socket + ";urp",
+                "-env:UserInstallation=file://" + userPath,
+                "--quickstart=no", "--nofirststartwizard",
+                "--norestore", "--nologo", "--headless" ]
+        self.pro = subprocess.Popen(argv)
+        print(self.pro.pid)
 
     def connect(self, socket):
         xLocalContext = uno.getComponentContext()
@@ -154,14 +153,15 @@ class OfficeConnection:
         os.system(command)
 
 class PersistentConnection:
-    def __init__(self, args):
+    def __init__(self, args, tmpdir):
         self.args = args
+        self.tmpdir = tmpdir
         self.connection = None
     def getContext(self):
         return self.connection.xContext
     def setUp(self):
         assert(not self.connection)
-        conn = OfficeConnection(self.args)
+        conn = OfficeConnection(self.args, self.tmpdir)
         conn.setUp()
         self.connection = conn
     def preTest(self):
@@ -486,22 +486,24 @@ class NormalTimer:
 
 def runLoadFileTests(arguments, files, isImport):
 
-    connection = PersistentConnection(arguments)
-    exportedFiles = []
-    try:
-        files.sort()
-        tests = []
-        timer = NormalTimer()
+    #Create temp directory for the user profile
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        connection = PersistentConnection(arguments, tmpdirname)
+        exportedFiles = []
+        try:
+            files.sort()
+            tests = []
+            timer = NormalTimer()
 
-        tests.extend( (LoadFileTest(file, arguments, timer, isImport) for file in files) )
-        runConnectionTests(connection, simpleInvoke, tests)
+            tests.extend( (LoadFileTest(file, arguments, timer, isImport) for file in files) )
+            runConnectionTests(connection, simpleInvoke, tests)
 
-        exportedFiles = [item for sublist in tests for item in sublist.exportedFiles]
+            exportedFiles = [item for sublist in tests for item in sublist.exportedFiles]
 
-    finally:
-        connection.kill()
+        finally:
+            connection.kill()
 
-    return exportedFiles
+        return exportedFiles
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
