@@ -37,6 +37,15 @@ def convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName,
         '--output=' + outputPath])
     process.communicate()
 
+    # Clean remaining files left by LibreOffice in tmp when it's killed
+    for fileName in os.listdir('/tmp/'):
+        if fileName.startswith('lu') and fileName.endswith('.tmp'):
+            path = '/tmp/' + fileName
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+
     if testName:
         count = 1
         assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, 'import', 'pdf']))))
