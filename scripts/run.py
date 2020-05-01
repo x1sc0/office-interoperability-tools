@@ -161,7 +161,7 @@ def execute(arguments, isTest):
         convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentName, isTest)
         convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, isTest)
 
-    remove_non_pdf_files(outputPath, typeName, componentName, isTest)
+    #remove_non_pdf_files(outputPath, typeName, componentName, isTest)
     replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, componentName, isTest)
     compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName, isTest)
 
