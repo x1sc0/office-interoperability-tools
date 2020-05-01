@@ -37,7 +37,7 @@ def launch_OfficeConverter(fileName, arguments):
     shutil.copyfile(inputName, '/tmp/' + fileName)
     os.chdir('/tmp/')
     try:
-        run(['xvfb-run', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
+        run(['xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=60)
         shutil.move('/tmp/' + tmpName, outputName)
         print("Converted " + inputName + " to " + outputName)
