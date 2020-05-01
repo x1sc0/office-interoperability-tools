@@ -403,15 +403,16 @@ class ExportFileTest:
                     xExportedDoc.close(True)
 
 class LoadFileTest:
-    def __init__(self, file, args, timer, isImport):
+    def __init__(self, file, args, timer, isImport, count):
         self.file = file
         self.args = args
         self.timer = timer
         self.isImport = isImport
+        self.count = count
         self.exportedFiles = []
 
     def run(self, xContext, connection):
-        print("Loading document: " + self.file)
+        print(self.count + "- Loading document: " + self.file)
         t = None
         args = None
         try:
@@ -496,7 +497,11 @@ def runLoadFileTests(arguments, files, isImport):
             tests = []
             timer = NormalTimer()
 
-            tests.extend( (LoadFileTest(file, arguments, timer, isImport) for file in files) )
+            total_count = len(files)
+            count = 0
+            for fileName in files:
+                count += 1
+                tests.append( (LoadFileTest(fileName, arguments, timer, isImport, str(count) + '/' + str(total_count))))
             runConnectionTests(connection, simpleInvoke, tests)
 
             exportedFiles = [item for sublist in tests for item in sublist.exportedFiles]
