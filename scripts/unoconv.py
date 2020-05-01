@@ -93,7 +93,8 @@ class OfficeConnection:
 
     def bootstrap(self, soffice, socket):
         userPath = os.path.join(self.tmpdir, 'libreoffice/4')
-        os.makedirs(userPath)
+        if not os.path.exists(userPath):
+            os.makedirs(userPath)
 
         argv = [ soffice, "--accept=" + socket + ";urp",
                 "-env:UserInstallation=file://" + userPath,
