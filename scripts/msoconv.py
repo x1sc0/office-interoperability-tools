@@ -30,7 +30,7 @@ def kill_mso():
             print("Killing process: " + str(pid))
             os.kill(pid, signal.SIGKILL)
 
-def launch_OfficeConverter(fileName, arguments):
+def launch_OfficeConverter(fileName, arguments, count, total_count):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
     inputName = os.path.join(arguments.input, fileName)
     outputName = os.path.join(arguments.output, fileName + ".pdf")
@@ -40,10 +40,10 @@ def launch_OfficeConverter(fileName, arguments):
         run(['xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
                 stdout=DEVNULL, stderr=DEVNULL, timeout=100)
         shutil.move('/tmp/' + tmpName, outputName)
-        print("Converted " + inputName + " to " + outputName)
+        print(str(count) + "/" + str(total_count) + " - Converted " + inputName + " to " + outputName)
 
     except TimeoutExpired as e:
-        print("TIMEOUT: Converting " + inputName + " to " + outputName)
+        print(str(count) + "/" + str(total_count) + " - TIMEOUT: Converting " + inputName + " to " + outputName)
     finally:
         os.remove(os.path.join('/tmp', fileName))
 
@@ -66,6 +66,8 @@ if __name__ == "__main__":
     if listFiles:
         cpuCount = multiprocessing.cpu_count()
         chunkSplit = cpuCount * 16
+        count = 0
+        total_count = len(listFiles)
 
         chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
         for chunk in chunks:
@@ -73,7 +75,8 @@ if __name__ == "__main__":
 
             pool = multiprocessing.Pool(cpuCount)
             for fileName in chunk:
-                pool.apply_async(launch_OfficeConverter, args=(fileName, arguments))
+                count += 1
+                pool.apply_async(launch_OfficeConverter, args=(fileName, arguments, count, total_count))
 
             pool.close()
             pool.join()
