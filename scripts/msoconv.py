@@ -29,8 +29,11 @@ def kill_mso(wineprefix):
     for line in out.splitlines():
         if b'WINWORD.EXE' in line or b'POWERPNT.EXE' in line or b'wine' in line:
             pid = int(line.split(None, 1)[0])
-            print("Killing process: " + str(pid))
-            os.kill(pid, signal.SIGKILL)
+            try:
+                print("Killing process: " + str(pid))
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:  # process already dead
+                pass
 
     userBackPath = os.path.join(wineprefix, 'drive_c', 'users.back')
     userPath = os.path.join(wineprefix, 'drive_c', 'users')
