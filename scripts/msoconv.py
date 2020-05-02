@@ -21,7 +21,7 @@ import random
 import multiprocessing
 import shutil
 
-def kill_mso():
+def kill_mso(wineprefix):
     p = Popen(['ps', '-A'], stdout=PIPE)
     out, err = p.communicate()
     for line in out.splitlines():
@@ -29,6 +29,17 @@ def kill_mso():
             pid = int(line.split(None, 1)[0])
             print("Killing process: " + str(pid))
             os.kill(pid, signal.SIGKILL)
+
+    userBackPath = os.path.join(wineprefix, 'drive_c', 'users.back')
+    userPath = os.path.join(wineprefix, 'drive_c', 'users')
+    if not os.path.exists(userBackPath):
+        print("ERROR: Create a backup of " + userPath + " in " + userBackPath)
+        print("Make sure MS Office is already working under Wine")
+        print("it will replace " + userPath + " on every execution as a clean profile")
+        print()
+        sys.exit(1)
+    shutil.rmtree(userPath)
+    shutil.copytree(userBackPath, userPath)
 
 def launch_OfficeConverter(fileName, arguments, count, total_count):
     tmpName = ''.join(random.choice(string.ascii_letters) for x in range(8)) + '.pdf'
@@ -75,7 +86,7 @@ if __name__ == "__main__":
 
         chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
         for chunk in chunks:
-            kill_mso()
+            kill_mso(arguments.wineprefix)
 
             pool = multiprocessing.Pool(cpuCount)
             for fileName in chunk:
