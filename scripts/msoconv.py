@@ -36,16 +36,20 @@ def launch_OfficeConverter(fileName, arguments, count, total_count):
     outputName = os.path.join(arguments.output, fileName + ".pdf")
     shutil.copyfile(inputName, os.path.join('/tmp', fileName))
     os.chdir('/tmp/')
-    try:
-        run(['xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
-                stdout=DEVNULL, stderr=DEVNULL, timeout=100)
+    # Using timeout with popen fills up the memory and eventually the kernel throws a OSError: [Errno 12] Cannot allocate memory
+    # pass the timeout parameter instead
+    timeout = 100
+    p = Popen(['timeout', str(timeout), 'xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
+        stdout=DEVNULL, stderr=DEVNULL)
+    p.communicate()
+
+    if os.path.exists(tmpName):
         shutil.move('/tmp/' + tmpName, outputName)
         print(str(count) + "/" + str(total_count) + " - Converted " + inputName + " to " + outputName)
-
-    except TimeoutExpired as e:
+    else:
         print(str(count) + "/" + str(total_count) + " - TIMEOUT: Converting " + inputName + " to " + outputName)
-    finally:
-        os.remove(os.path.join('/tmp', fileName))
+
+    os.remove(os.path.join('/tmp', fileName))
 
 if __name__ == "__main__":
     parser = parser.CommonParser()
