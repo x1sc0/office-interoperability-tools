@@ -149,8 +149,6 @@ class OfficeConnection:
         killFile = open("killFile.log", "a")
         killFile.write(command + "\n")
         killFile.close()
-        print("kill")
-        print(command)
         os.system(command)
 
 class PersistentConnection:
