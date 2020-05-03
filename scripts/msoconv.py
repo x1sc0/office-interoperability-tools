@@ -15,13 +15,18 @@
 import sys
 import os
 import parser
-from subprocess import Popen, PIPE, DEVNULL, run
+from subprocess import Popen, PIPE, DEVNULL
 import signal
 import string
 import random
 import multiprocessing
 import shutil
 import time
+
+def display_in_used():
+    p = Popen(["xdpyinfo", "-display", ":0"], stdout=PIPE, stderr=PIPE)
+    p.communicate()
+    return p.returncode == 0
 
 def kill_mso(wineprefix):
     p = Popen(['ps', '-A'], stdout=PIPE)
@@ -59,7 +64,7 @@ def launch_OfficeConverter(fileName, arguments, count, total_count):
     # Using timeout with popen fills up the memory and eventually the kernel throws a OSError: [Errno 12] Cannot allocate memory
     # pass the timeout parameter instead. 60 should be more than enough. Most files are converted within 10 seconds
     timeout = 60
-    p = Popen(['timeout', str(timeout), 'xvfb-run', '-a', 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
+    p = Popen(['timeout', str(timeout), 'wine', 'OfficeConvert', '--format=pdf', fileName, "--output=" + tmpName],
         stdout=DEVNULL, stderr=DEVNULL)
     p.communicate()
     endTime = time.time()
@@ -83,6 +88,12 @@ if __name__ == "__main__":
 
     arguments = parser.check_values()
 
+    if not display_in_used():
+        print("Display :0 is no in used. Emulating it ")
+        Popen(["Xvfb", ":0", "-screen", "0", "1024x768x16"])
+
+    if "DISPLAY" not in os.environ:
+        os.environ["DISPLAY"] = ":0.0"
     os.environ["WINEPREFIX"] = arguments.wineprefix
 
     listFiles = []
