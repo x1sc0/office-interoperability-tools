@@ -18,6 +18,8 @@ from subprocess import Popen, PIPE
 import signal
 import config
 import shutil
+import logging
+import sys
 
 def kill_soffice():
     p = Popen(['ps', '-A'], stdout=PIPE)
@@ -28,7 +30,23 @@ def kill_soffice():
             print("Killing process: " + str(pid))
             os.kill(pid, signal.SIGKILL)
 
+def start_logger():
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+
+    currentPath = os.path.dirname(os.path.abspath(__file__))
+    logFormatter = logging.Formatter("%(asctime)s %(message)s")
+    fileHandler = logging.FileHandler(os.path.join(currentPath, '../') + "run.log")
+    fileHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(fileHandler)
+
+    streamHandler = logging.StreamHandler(sys.stdout)
+    rootLogger.addHandler(streamHandler)
+
+    return rootLogger
+
 def convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName, componentName, testName):
+    logger.info("Converting files from " + inputPath + " to " + outputPath + " with LibreOffice")
     process = Popen(['python3', scriptsPath + '/unoconv.py',
         '--soffice=' + arguments.soffice,
         '--type=' + typeName,
@@ -37,7 +55,43 @@ def convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName,
         '--output=' + outputPath])
     process.communicate()
 
-    # Clean remaining files left by LibreOffice in tmp when it's killed
+    for importExtension in config.config[typeName][componentName]["import"]:
+        inputCount = 0
+        for fileName in os.listdir(inputPath):
+            if fileName.endswith(importExtension):
+                inputCount += 1
+
+        if inputCount > 0:
+            for exportExtension in config.config[typeName][componentName]["export"]:
+                outputCount = 0
+                for fileName in os.listdir(outputPath):
+                    ext = importExtension + '.' + exportExtension
+                    if fileName.endswith(ext):
+                        outputCount += 1
+                ratio = outputCount * 100 / inputCount
+
+                logger.info("Import: " + importExtension + " Total: " + str(inputCount) + " Export: " + exportExtension + \
+                        " Total: " + str(outputCount) + " Ratio: " + str(ratio))
+
+    for importExtension in config.config[typeName][componentName]["roundtrip"]:
+        inputCount = 0
+        for fileName in os.listdir(outputPath):
+            if fileName.endswith(importExtension):
+                inputCount += 1
+
+        if inputCount > 0:
+            outputCount = 0
+            for fileName in os.listdir(outputPath):
+                ext = importExtension + '.pdf'
+                if fileName.endswith(ext):
+                    outputCount += 1
+            ratio = outputCount * 100 / inputCount
+
+            logger.info("Import: " + importExtension + " Total: " + str(inputCount) + " Export: pdf" + \
+                    " Total: " + str(outputCount) + " Ratio: " + str(ratio))
+
+
+    logger.info("Cleaning remaining files left by LibreOffice in /tmp")
     for fileName in os.listdir('/tmp/'):
         if fileName.startswith('lu') and fileName.endswith('.tmp'):
             path = '/tmp/' + fileName
@@ -58,6 +112,7 @@ def convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName,
         assert(len(os.listdir(outputPath)) == count)
 
 def convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentName, testName):
+    logger.info("Converting files from " + inputPath + " to " + referencePath + " with MSO")
     for extension in config.config['ooxml'][componentName]["import"]:
         process = Popen(['python3', scriptsPath + '/msoconv.py',
             '--extension=' + extension,
@@ -66,11 +121,29 @@ def convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentN
             '--output=' + referencePath])
         process.communicate()
 
+        inputCount = 0
+
+        for fileName in os.listdir(inputPath):
+            if fileName.endswith(extension):
+                inputCount += 1
+
+        if inputCount > 0:
+            outputCount = 0
+            for fileName in os.listdir(referencePath):
+                ext = extension + '.pdf'
+                if fileName.endswith(ext):
+                    outputCount += 1
+            ratio = outputCount * 100 / inputCount
+
+            logger.info("Import: " + extension + " Total: " + str(inputCount) + " Export: pdf" + \
+                    " Total: " + str(outputCount) + " Ratio: " + str(ratio))
+
     if testName:
         assert(len(os.listdir(referencePath)) == 1)
         assert(os.path.exists(os.path.join(referencePath, '.'.join([testName, 'pdf']))))
 
 def convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, testName):
+    logger.info("Converting files from " + outputPath + " to " + outputPath + " with MSO")
     for extension in config.config['ooxml'][arguments.component]["export"]:
         if extension not in config.config["ooxml"][arguments.component]["roundtrip"]:
             process = Popen(['python3', scriptsPath + '/msoconv.py',
@@ -79,6 +152,23 @@ def convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, testN
                 '--input=' + outputPath,
                 '--output=' + outputPath])
             process.communicate()
+
+        inputCount = 0
+
+        for fileName in os.listdir(outputPath):
+            if fileName.endswith(extension):
+                inputCount += 1
+
+        if inputCount > 0:
+            outputCount = 0
+
+            for fileName in os.listdir(outputPath):
+                ext = extension + '.pdf'
+                if fileName.endswith(ext):
+                    outputCount += 1
+            ratio = outputCount * 100 / inputCount
+            logger.info("Import: " + extension + " Total: " + str(inputCount) + " Export: pdf" + \
+                    " Total: " + str(outputCount) + " Ratio: " + str(ratio))
 
     if testName:
         for extension in config.config["ooxml"][componentName]["export"]:
@@ -89,7 +179,7 @@ def remove_non_pdf_files(outputPath, typeName, componentName, testName):
         for extension in config.config[typeName][componentName]["export"]:
             ext = os.path.splitext(fileName)[1][1:]
             if ext == extension:
-                print("Removing " + os.path.join(outputPath, fileName))
+                logger.info("Removing " + os.path.join(outputPath, fileName))
                 os.remove(os.path.join(outputPath, fileName))
 
     if testName:
@@ -109,14 +199,14 @@ def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, co
         if not i.startswith(".~lock."):
             importNamePath = os.path.join(outputPath, i + ".import.pdf")
             if not os.path.exists(importNamePath):
-                print(importNamePath + " doesn't exists. Using failed.pdf")
+                logger.info(importNamePath + " doesn't exists. Using failed.pdf")
                 shutil.copyfile(failedPdfPath, importNamePath)
 
             for extension in config.config[arguments.type][arguments.component]["export"]:
                 exportNamePath = os.path.join(outputPath, ".".join([i, extension, "pdf"]) )
 
                 if not os.path.exists(exportNamePath):
-                    print(exportNamePath + " doesn't exists. Using failed.pdf")
+                    logger.info(exportNamePath + " doesn't exists. Using failed.pdf")
                     shutil.copyfile(failedPdfPath, exportNamePath)
 
     if testName:
@@ -124,6 +214,7 @@ def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, co
             assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf']))))
 
 def compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName, testName):
+    logger.info("Comparing PDF from " + referencePath + " and " + outputPath)
     process = Popen(['python3', scriptsPath + '/docompare.py',
         '--input=' + outputPath,
         '--reference=' + referencePath])
@@ -185,11 +276,15 @@ if __name__ == "__main__":
     parser.add_optional_arguments(['--wineprefix'])
     arguments = parser.check_values()
 
+    logger = start_logger()
+
     kill_soffice()
 
     process = Popen([arguments.soffice, "--version"], stdout=PIPE, stderr=PIPE)
     stdout = process.communicate()[0].decode("utf-8")
     version = stdout.split(" ")[2].strip()
+    logger.info("")
+    logger.info("Hash " + str(version))
 
     sofficePath = os.path.dirname(arguments.soffice)
 
@@ -197,6 +292,6 @@ if __name__ == "__main__":
     os.environ["URE_BOOTSTRAP"] = "file://" + sofficePath + "/fundamentalrc"
 
     execute(arguments, True)
-    print("Tests Passed!!")
+    logger.info("Tests Passed!!")
     execute(arguments, False)
 
