@@ -425,7 +425,6 @@ class LoadFileTest:
             t = threading.Timer(self.timer.getImportTime(), alarm_handler, args)
             t.start()
             xDoc = loadFromURL(xContext, url, t, self.args.component)
-            print("doc loaded")
             t.cancel()
             if xDoc:
                 exportTest = ExportFileTest(xDoc, self.file, self.args, self.timer, self.isImport)
@@ -459,7 +458,6 @@ class LoadFileTest:
                 if xDoc:
                     t = threading.Timer(10, alarm_handler, args)
                     t.start()
-                    print("closing document")
                     xDoc.close(True)
                     t.cancel()
             except pyuno.getClass("com.sun.star.beans.UnknownPropertyException"):
@@ -474,7 +472,6 @@ class LoadFileTest:
                     pass
                 connection.tearDown()
                 connection.setUp()
-            print("...done with: " + self.file)
 
 class NormalTimer:
     def __init__(self):
