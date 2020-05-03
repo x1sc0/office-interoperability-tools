@@ -27,10 +27,12 @@ def kill_mso(wineprefix):
     p = Popen(['ps', '-A'], stdout=PIPE)
     out, err = p.communicate()
     for line in out.splitlines():
-        if b'WINWORD.EXE' in line or b'POWERPNT.EXE' in line or b'wine' in line:
+        if b'WINWORD.EXE' in line or b'POWERPNT.EXE' in line or \
+                b'wine' in line or b'explorer.exe' in line or \
+                b'services.exe' in line or b'rpcss.exe' in line or \
+                b'OSPPSVC.EXE' in line or b'plugplay.exe' in line:
             pid = int(line.split(None, 1)[0])
             try:
-                print("Killing process: " + str(pid))
                 os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:  # process already dead
                 pass
