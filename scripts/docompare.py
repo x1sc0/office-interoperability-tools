@@ -64,6 +64,11 @@ def tmpname():
     f.close()
     return f.name
 
+def clean_tmpfiles():
+    for fileName in os.listdir('/tmp'):
+        if fileName.endswith('.tif'):
+            os.remove('/tmp/' + fileName)
+
 def toBin(img, thr=200):
     #return (img < thr).astype(np.uint8)
     return (img < thr).max(axis=2).astype(np.uint8)
@@ -675,9 +680,8 @@ if __name__=="__main__":
 
     arguments = parser.check_values()
 
-    cpuCount = multiprocessing.cpu_count()
 
-    listOfFiles = []
+    listFiles = []
     for fileName in os.listdir(arguments.input):
         extension = os.path.splitext(fileName)[1][1:]
         if extension == 'pdf':
@@ -690,12 +694,17 @@ if __name__=="__main__":
                          not os.path.exists(outFile + '-p.pdf') and \
                          not os.path.exists(outFile + '-s.pdf') and \
                          not os.path.exists(outFile + '-z.pdf'):
-                    listOfFiles.append([referencePath, fileNamePath, outFile])
+                    listFiles.append([referencePath, fileNamePath, outFile])
 
     if listFiles:
-        with ProcessPool(cpuCount) as pool:
-            totalCount = len(listOfFiles)
-            for i in range(totalCount):
-                future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile, i + 1, totalCount), timeout=300)
-                future.add_done_callback(task_done)
+        cpuCount = multiprocessing.cpu_count()
+        chunkSplit = cpuCount * 8
+        totalCount = len(listFiles)
+        chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
+        for chunk in chunks:
+            clean_tmpfiles()
+            with ProcessPool(cpuCount) as pool:
+                for i in range(totalCount):
+                    future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile, i + 1, totalCount), timeout=300)
+                    future.add_done_callback(task_done)
 
