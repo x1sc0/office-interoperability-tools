@@ -542,34 +542,34 @@ targetid="target"
 
 def mainfunc(referenceFile, inFile, outFile, count, totalCount):
 
+    print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
+
+    #load documents
+    pages1, shapes1 = pdf2array(referenceFile, dpi)
+    if pages1 == None:
+        raise DoException("failed to open %s."%(referenceFile))
+
+    badpagetxt=""
+    pages2, shapes2 = pdf2array(inFile, dpi)
+
+    if pages2 == None:
+        img1 = makeSingle(pages1, shapes1)
+        outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
+        rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf')
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf')
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf')
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf')
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
+        raise DoException("failed to open %s."%(inFile))
+
+    if bisecting:
+        badpagetxt="-bad"
+
     try:
-        print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
-
-        #load documents
-        pages1, shapes1 = pdf2array(referenceFile, dpi)
-        if pages1 == None:
-            raise DoException("failed to open %s."%(referenceFile))
-
-        badpagetxt=""
-        pages2, shapes2 = pdf2array(inFile, dpi)
-
-        if pages2 == None:
-            img1 = makeSingle(pages1, shapes1)
-            outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
-            rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf')
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf')
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf')
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf')
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
-            raise DoException("failed to open %s."%(inFile))
-
-
-        if bisecting:
-            badpagetxt="-bad"
 
         # create single image for each
         img1 = makeSingle(pages1, shapes1)
