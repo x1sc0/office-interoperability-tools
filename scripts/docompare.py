@@ -553,10 +553,10 @@ exifcmd = 'exiftool -overwrite_original -Custom1="%s" %s >/dev/null'
 sourceid="source"
 targetid="target"
 
-def mainfunc(referenceFile, inFile, outFile):
+def mainfunc(referenceFile, inFile, outFile, count, totalCount):
 
     try:
-        print("Comparing " + referenceFile + " and " + inFile)
+        print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
 
         #load documents
         pages1, shapes1 = pdf2array(referenceFile, dpi)
@@ -677,19 +677,25 @@ if __name__=="__main__":
 
     cpuCount = multiprocessing.cpu_count()
 
-    with ProcessPool(cpuCount) as pool:
-        for fileName in os.listdir(arguments.input):
-            extension = os.path.splitext(fileName)[1][1:]
-            if extension == 'pdf':
-                fileNamePath = os.path.join(arguments.input, fileName)
-                fileNameWithoutPDF = os.path.splitext(fileName)[0]
-                referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
-                if os.path.exists(referencePath):
-                    outFile = fileNamePath + '-pair'
-                    if not os.path.exists(outFile + '-l.pdf') and \
-                             not os.path.exists(outFile + '-p.pdf') and \
-                             not os.path.exists(outFile + '-s.pdf') and \
-                             not os.path.exists(outFile + '-z.pdf'):
-                        future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile), timeout=300)
-                        future.add_done_callback(task_done)
+    listOfFiles = []
+    for fileName in os.listdir(arguments.input):
+        extension = os.path.splitext(fileName)[1][1:]
+        if extension == 'pdf':
+            fileNamePath = os.path.join(arguments.input, fileName)
+            fileNameWithoutPDF = os.path.splitext(fileName)[0]
+            referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
+            if os.path.exists(referencePath):
+                outFile = fileNamePath + '-pair'
+                if not os.path.exists(outFile + '-l.pdf') and \
+                         not os.path.exists(outFile + '-p.pdf') and \
+                         not os.path.exists(outFile + '-s.pdf') and \
+                         not os.path.exists(outFile + '-z.pdf'):
+                    listOfFiles.append([referencePath, fileNamePath, outFile])
+
+    if listFiles:
+        with ProcessPool(cpuCount) as pool:
+            totalCount = len(listOfFiles)
+            for i in range(totalCount):
+                future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile, i + 1, totalCount), timeout=300)
+                future.add_done_callback(task_done)
 
