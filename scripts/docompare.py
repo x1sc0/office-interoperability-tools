@@ -671,9 +671,9 @@ if __name__=="__main__":
             referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
             if os.path.exists(referencePath):
                 outFile = fileNamePath + '-pair'
-                if not os.path.exists(outFile + '-l.pdf') and \
-                         not os.path.exists(outFile + '-p.pdf') and \
-                         not os.path.exists(outFile + '-s.pdf') and \
+                if not os.path.exists(outFile + '-l.pdf') or \
+                         not os.path.exists(outFile + '-p.pdf') or \
+                         not os.path.exists(outFile + '-s.pdf') or \
                          not os.path.exists(outFile + '-z.pdf'):
                     listFiles.append([referencePath, fileNamePath, outFile])
 
