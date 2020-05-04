@@ -554,13 +554,13 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         img1 = makeSingle(pages1, shapes1)
         outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
         rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf')
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf')
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf')
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf')
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
         raise DoException("failed to open %s."%(inFile))
 
@@ -590,16 +590,15 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
             outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
 
         if msg:
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf')
+            Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
             os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf')
+            Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
             os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf')
+            Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
             os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf')
+            Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
             os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
             raise DoException(msg)
-
 
         #crop to common size
         s1 = img1.shape
