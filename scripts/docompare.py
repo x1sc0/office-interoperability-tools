@@ -140,7 +140,7 @@ def getPagePixelOverlayIndex(iarray1, iarray2):
     itrim1 = iarray1[ystart:ystop, xstart:xstop].astype(np.uint8)
     itrim2 = iarray2[ystart:ystop, xstart:xstop].astype(np.uint8)
     #return 2.0* np.sum((itrim1+itrim2) > 1) / (np.sum(itrim1) + np.sum(itrim2))
-    diff = itrim1 != itrim2
+    diff = not np.array_equal(itrim1, itrim2)
     ovl = 100*(1.0 - float(np.sum(diff)) / (np.sum(itrim2) + np.sum(itrim1)))
     rslt = 'PagePixelOvelayIndex[%%]: %2.1f : '%ovl
     return rslt
