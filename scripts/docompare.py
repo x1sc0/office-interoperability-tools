@@ -29,6 +29,7 @@ import multiprocessing
 from pebble import ProcessPool
 from concurrent.futures import TimeoutError
 from subprocess import Popen, DEVNULL
+import time
 
 class DoException(Exception):
     def __init__(self, what):
@@ -541,6 +542,7 @@ targetid="target"
 def mainfunc(referenceFile, inFile, outFile, count, totalCount):
 
     print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
+    startTime = time.time()
 
     #load documents
     pages1, shapes1 = pdf2array(referenceFile, dpi)
@@ -597,10 +599,14 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
         Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
-        raise DoException(msg)
+
+        endTime = time.time()
+        diffTime = int(endTime - startTime)
+
+        print(str(count) + "/" + str(totalCount) + " SUCCESS: - " + msg + " in " + str(diffTime) + " seconds" )
+        return
 
     try:
-
         #crop to common size
         s1 = img1.shape
         s2 = img2.shape
@@ -643,6 +649,11 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
             # side-by-side
         if overlayStyle == 's' or overlayStyle == 'a':
             saveRslt('s', '', img1, img2, referenceFile, inFile, le1, rsltText, outFile)
+
+        endTime = time.time()
+        diffTime = int(endTime - startTime)
+
+        print(str(count) + "/" + str(totalCount) + " SUCCESS: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
 
     except DoException as e:
         print("\n" + e.what + " (" + referenceFile + ", " + inFile + ")")
