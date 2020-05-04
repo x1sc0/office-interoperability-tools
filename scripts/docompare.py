@@ -475,7 +475,6 @@ def getBBox(img1, img2=None):
         return np.minimum(min1, min2), np.maximum(max1, max2)
 
 def saveRslt(overlayStyle, title, img0, img1, name0, name1, rslt, rsltText, outFile):
-    exifcmd = 'exiftool -overwrite_original -Custom1="%s" %s >/dev/null'
     oname = "%s-%s.pdf"%(outFile, overlayStyle)
     if overlayStyle=='s':
         s=np.minimum(img0.shape, img1.shape)
@@ -483,7 +482,9 @@ def saveRslt(overlayStyle, title, img0, img1, name0, name1, rslt, rsltText, outF
     else:
         outimg = genoverlay(img0, title, name0, name1, rslt, img2=img1)
     Image.fromarray(outimg).save(oname)
-    os.system(exifcmd%(rsltText, oname))
+    p = Popen(["exiftool", "-overwrite_original", '-Custom1="' + rsltText + '"', oname],
+            stdout=DEVNULL, stderr=DEVNULL)
+    p.communicate()
 
 def px2mm(val):
     """
