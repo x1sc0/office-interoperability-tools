@@ -152,9 +152,6 @@ def mergeSingle(ml, tx0, sp0, tx1, sp1):
     sp0 = sp0[:ml]+sp0[ml+1:]
     return tx0, sp0
 
-def pr(tx, p=1):
-    print(len(tx), np.array(tx)[:,p])
-
 def mergeLocation(tx0, sp0, tx1, sp1):
     """
     find merge location in (tx0,sp0)
