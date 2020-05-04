@@ -28,6 +28,7 @@ import parser
 import multiprocessing
 from pebble import ProcessPool
 from concurrent.futures import TimeoutError
+from subprocess import Popen, DEVNULL
 
 class DoException(Exception):
     def __init__(self, what):
@@ -120,8 +121,9 @@ def pdf2array(pdffile, res=300):
         color order is BGR
     """
     tname = tmpname()+'.tif'
-    cmd = 'cat %s 2>/dev/null | gs -dQUIET -dNOPAUSE -sDEVICE=tiff24nc -r%d -sOutputFile=%s - 2>/dev/null'%(pdffile, res, tname)
-    os.system(cmd)
+    p = Popen(["gs", "-dQUIET", "-dNOPAUSE", "-sDEVICE=tiff24nc", '-dBATCH', "-r" + str(res), "-sOutputFile=" + tname, pdffile],
+            stdout=DEVNULL, stderr=DEVNULL)
+    p.communicate()
 
     if not os.path.exists(tname):
         return None, None
