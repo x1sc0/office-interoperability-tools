@@ -705,6 +705,6 @@ if __name__=="__main__":
             clean_tmpfiles()
             with ProcessPool(cpuCount) as pool:
                 for i in range(totalCount):
-                    future = pool.schedule(mainfunc, args=(referencePath, fileNamePath, outFile, i + 1, totalCount), timeout=300)
+                    future = pool.schedule(mainfunc, args=(listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount), timeout=300)
                     future.add_done_callback(task_done)
 
