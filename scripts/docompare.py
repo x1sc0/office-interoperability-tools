@@ -567,38 +567,39 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
     if bisecting:
         badpagetxt="-bad"
 
-    try:
 
-        # create single image for each
-        img1 = makeSingle(pages1, shapes1)
-        img2 = makeSingle(pages2, shapes2)
+    # create single image for each
+    img1 = makeSingle(pages1, shapes1)
+    img2 = makeSingle(pages2, shapes2)
 
-        msg = ''
-        #if all elements are equal to the first one, it's empty
-        if np.all(img1 == img1[0,0,0]):
-            if np.all(img2 == img2[0,0,0]):
-                msg= "Source and Target pdfs '%s' are empty, nothing to test"%(referenceFile)
-                rsltText = "-:0:-:0:-:0:-:0:-:0"  #dummy result string 10 dashes necessary
-                outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
-            else:
-                msg= "Source pdf '%s' is empty, Target pdf not, nothing to test"%(referenceFile)
-                rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
-                outimg = genoverlay(toBin(img2,binthr), msg, referenceFile, inFile, "")
-        elif np.all(img2 == img2[0,0,0]):
-            msg = "Target pdf '%s' is empty, test failed"%(inFile)
-            rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+    msg = ''
+    #if all elements are equal to the first one, it's empty
+    if np.all(img1 == img1[0,0,0]):
+        if np.all(img2 == img2[0,0,0]):
+            msg= "Source and Target pdfs '%s' are empty, nothing to test"%(referenceFile)
+            rsltText = "-:0:-:0:-:0:-:0:-:0"  #dummy result string 10 dashes necessary
             outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
+        else:
+            msg= "Source pdf '%s' is empty, Target pdf not, nothing to test"%(referenceFile)
+            rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+            outimg = genoverlay(toBin(img2,binthr), msg, referenceFile, inFile, "")
+    elif np.all(img2 == img2[0,0,0]):
+        msg = "Target pdf '%s' is empty, test failed"%(inFile)
+        rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+        outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
 
-        if msg:
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-            Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
-            os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
-            raise DoException(msg)
+    if msg:
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
+        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
+        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
+        raise DoException(msg)
+
+    try:
 
         #crop to common size
         s1 = img1.shape
