@@ -34,26 +34,6 @@ class DoException(Exception):
     def __init__(self, what):
         self.what = what
 
-def disp(iimg, label = "", gray=False):
-    """ Display an image using pylab
-    """
-    try:
-        import pylab
-        dimage = iimg.copy()
-        if iimg.ndim==3:
-            dimage[...,0] = iimg[...,2]
-            dimage[...,2] = iimg[...,0]
-
-        pylab.imshow(dimage, interpolation='none')
-        if gray:
-            pylab.gray()
-        #pylab.gca().format_coord = format_coord
-        pylab.text(1500, -30, label)
-        pylab.axis('off')
-        pylab.show()
-    except ImportError:
-        print("Module pylab not available")
-
 def distancetransf(image):
     if image.dtype=='bool':
         return ndimage.distance_transform_edt(1-image.astype(np.int8))
