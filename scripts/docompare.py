@@ -26,8 +26,6 @@ from tifffile import TiffFile
 from scipy import ndimage
 import parser
 import multiprocessing
-from pebble import ProcessPool
-from concurrent.futures import TimeoutError
 from subprocess import Popen, DEVNULL
 from contextlib import contextmanager
 import time
@@ -647,20 +645,11 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
     diffTime = int(endTime - startTime)
     print(str(count) + "/" + str(totalCount) + " SUCCESS: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
 
-def task_done(future):
-    try:
-        result = future.result()  # blocks until results are ready
-    except TimeoutError as error:
-        print("TIMEOUT")
-    except Exception as error:
-        print("Function raised %s" % error)
-
 if __name__=="__main__":
     parser = parser.CommonParser()
     parser.add_arguments(['--input', '--reference'])
 
     arguments = parser.check_values()
-
 
     listFiles = []
     for fileName in os.listdir(arguments.input):
@@ -681,11 +670,15 @@ if __name__=="__main__":
         cpuCount = multiprocessing.cpu_count()
         chunkSplit = cpuCount * 8
         totalCount = len(listFiles)
+        count = 0
+
         chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
         for chunk in chunks:
             clean_tmpfiles()
-            with ProcessPool(cpuCount) as pool:
-                for i in range(totalCount):
-                    future = pool.schedule(mainfunc, args=(listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount), timeout=300)
-                    future.add_done_callback(task_done)
 
+            pool = multiprocessing.Pool(cpuCount)
+            for i in range(totalCount):
+                count += 1
+                pool.apply_async(mainfunc, args=(listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount))
+            pool.close()
+            pool.join()
