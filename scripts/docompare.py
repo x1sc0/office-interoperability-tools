@@ -496,36 +496,6 @@ def px2mm(val):
     global dpi, i2mm
     return val*i2mm/dpi
 
-#testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
-def valToGrade(data):
-    """ get grade for individual observed measures """
-    # error grading
-    FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
-    HLPEMax = (0.01,5,10,15,20)        #
-    THEMax = (0.01,2, 4, 6,8)
-    LNDMax = (0.01,0.01,0.01,0.01,0.01)
-    FDEVal=5
-    for i in range(len(FDEMax)):
-        if FDEMax[i] >float(data[0]):
-            FDEVal=i
-            break
-    HLPEVal=5
-    for i in range(len(HLPEMax)):
-        if HLPEMax[i] > float(data[1]):
-            HLPEVal=i
-            break
-    THEVal=5
-    for i in range(len(THEMax)):
-        if THEMax[i] > float(data[2]):
-            THEVal=i
-            break
-    LNDVal=5
-    for i in range(len(LNDMax)):
-        if LNDMax[i] > abs(float(data[3])):
-            LNDVal=i
-            break
-    return max((FDEVal, HLPEVal, THEVal, LNDVal))
-
 class TimeoutException(Exception): pass
 
 @contextmanager
@@ -544,7 +514,6 @@ def time_limit(seconds):
 a4width=210
 a4height=297
 i2mm=25.4    # inch to mm conversion
-bisecting = False
 badThr = 3
 overlayStyle = 'a'  #output all versions by default
 progdesc="Compare two pdf documents and return some statistics"
@@ -577,9 +546,6 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
         Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
         raise DoException("failed to open " + inFile)
-
-    if bisecting:
-        badpagetxt="-bad"
 
     # create single image for each
     img1 = makeSingle(pages1, shapes1)
@@ -617,12 +583,6 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
 
 def compare_and_create_pdfs(img1, img2, outFile):
 
-    #crop to common size
-    s1 = img1.shape
-    s2 = img2.shape
-    s=np.minimum(s1,s2)
-    #img1 = img1[:s[0],:s[1]]
-    #img2 = img2[:s[0],:s[1]]
     bimg1 = toBin(img1,binthr)
     bimg2 = toBin(img2,binthr)
 
@@ -633,13 +593,6 @@ def compare_and_create_pdfs(img1, img2, outFile):
     le2 = ': HorizLinePositionError[mm]: %2.2f '%lineOvlHPosRslt
     le3 = ': TextHeightError[mm]: %2.2f '%pageHeightRslt
     le4 = ': LineNumDifference: %2d'%pageLinesRslt
-    grade = valToGrade((lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt))
-
-    if bisecting:
-        if grade < badThr:
-            outFile = outFile+"-good"
-        else:
-            outFile = outFile+"-bad"
 
     rsltText = plainOvlRslt + le1 + le2 + le3 + le4
     # command to write statistics to the pdf file, to be used in report creation
