@@ -581,7 +581,7 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
 
     return img1, img2
 
-def compare_and_create_pdfs(img1, img2, outFile):
+def compare_and_create_pdfs(img1, img2, referenceFile, inFile, outFile):
 
     bimg1 = toBin(img1,binthr)
     bimg2 = toBin(img2,binthr)
@@ -634,7 +634,7 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
     # Use another timeout for this part, which is much slower
     try:
         with time_limit(150):
-            compare_and_create_pdfs(img1, img2, outFile)
+            compare_and_create_pdfs(img1, img2, referenceFile, inFile, outFile)
 
     except TimeoutException as e:
         endTime = time.time()
