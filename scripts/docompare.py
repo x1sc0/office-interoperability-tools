@@ -29,7 +29,9 @@ import multiprocessing
 from pebble import ProcessPool
 from concurrent.futures import TimeoutError
 from subprocess import Popen, DEVNULL
+from contextlib import contextmanager
 import time
+import signal
 
 class DoException(Exception):
     def __init__(self, what):
@@ -524,6 +526,20 @@ def valToGrade(data):
             break
     return max((FDEVal, HLPEVal, THEVal, LNDVal))
 
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+
+
 #global definitions
 a4width=210
 a4height=297
@@ -539,15 +555,11 @@ exifcmd = 'exiftool -overwrite_original -Custom1="%s" %s >/dev/null'
 sourceid="source"
 targetid="target"
 
-def mainfunc(referenceFile, inFile, outFile, count, totalCount):
-
-    print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
-    startTime = time.time()
-
+def load_documents_and_make_singles(referenceFile, inFile, outFile):
     #load documents
     pages1, shapes1 = pdf2array(referenceFile, dpi)
     if pages1 == None:
-        raise DoException("failed to open %s."%(referenceFile))
+        raise DoException("failed to open " + referenceFile)
 
     badpagetxt=""
     pages2, shapes2 = pdf2array(inFile, dpi)
@@ -564,11 +576,10 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
         Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
-        raise DoException("failed to open %s."%(inFile))
+        raise DoException("failed to open " + inFile)
 
     if bisecting:
         badpagetxt="-bad"
-
 
     # create single image for each
     img1 = makeSingle(pages1, shapes1)
@@ -600,63 +611,87 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
         os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
 
+        raise DoException(" SUCCESS: - " + msg )
+
+    return img1, img2
+
+def compare_and_create_pdfs(img1, img2, outFile):
+
+    #crop to common size
+    s1 = img1.shape
+    s2 = img2.shape
+    s=np.minimum(s1,s2)
+    #img1 = img1[:s[0],:s[1]]
+    #img2 = img2[:s[0],:s[1]]
+    bimg1 = toBin(img1,binthr)
+    bimg2 = toBin(img2,binthr)
+
+    plainOvlRslt = getPagePixelOverlayIndex(bimg1, bimg2)
+    lineVHOvlPage, lineVOvlPage, lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt = lineIndexPage(bimg1, bimg2)
+
+    le1 = 'FeatureDistanceError[mm]: %2.1f '%lineOvlDistRslt
+    le2 = ': HorizLinePositionError[mm]: %2.2f '%lineOvlHPosRslt
+    le3 = ': TextHeightError[mm]: %2.2f '%pageHeightRslt
+    le4 = ': LineNumDifference: %2d'%pageLinesRslt
+    grade = valToGrade((lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt))
+
+    if bisecting:
+        if grade < badThr:
+            outFile = outFile+"-good"
+        else:
+            outFile = outFile+"-bad"
+
+    rsltText = plainOvlRslt + le1 + le2 + le3 + le4
+    # command to write statistics to the pdf file, to be used in report creation
+
+    #options: s, p, l z
+    if overlayStyle == 'p' or overlayStyle == 'a':
+        saveRslt('p',  'Page overlay, no alignment', bimg1, bimg2, referenceFile, inFile, plainOvlRslt+le3, rsltText, outFile)
+
+    if overlayStyle == 'l' or overlayStyle == 'a':
+        saveRslt('l', 'Page overlay, vertically aligned lines', lineVOvlPage, None, referenceFile, inFile, le2, rsltText, outFile)
+
+    if overlayStyle == 'z' or overlayStyle == 'a':
+        saveRslt('z', 'Page overlay, vertically and horizontally aligned lines', lineVHOvlPage, None, referenceFile, inFile, le1, rsltText, outFile)
+
+        # side-by-side
+    if overlayStyle == 's' or overlayStyle == 'a':
+        saveRslt('s', '', img1, img2, referenceFile, inFile, le1, rsltText, outFile)
+
+def mainfunc(referenceFile, inFile, outFile, count, totalCount):
+
+    print(str(count) + "/" + str(totalCount) + " - Comparing " + referenceFile + " and " + inFile)
+    startTime = time.time()
+
+    # Use one timeout for the first part which normally is fast
+    try:
+        with time_limit(60):
+            img1, img2 = load_documents_and_make_singles(referenceFile, inFile, outFile)
+    except TimeoutException as e:
         endTime = time.time()
         diffTime = int(endTime - startTime)
-
-        print(str(count) + "/" + str(totalCount) + " SUCCESS: - " + msg + " in " + str(diffTime) + " seconds" )
+        print(str(count) + "/" + str(totalCount) + " TIMEOUT1: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
+        return
+    except DoException as e:
+        endTime = time.time()
+        diffTime = int(endTime - startTime)
+        print(str(count) + "/" + str(totalCount) + e.what + " in " + str(diffTime) + " seconds" )
         return
 
+    # Use another timeout for this part, which is much slower
     try:
-        #crop to common size
-        s1 = img1.shape
-        s2 = img2.shape
-        s=np.minimum(s1,s2)
-        #img1 = img1[:s[0],:s[1]]
-        #img2 = img2[:s[0],:s[1]]
-        bimg1 = toBin(img1,binthr)
-        bimg2 = toBin(img2,binthr)
+        with time_limit(150):
+            compare_and_create_pdfs(img1, img2, outFile)
 
-        plainOvlRslt = getPagePixelOverlayIndex(bimg1, bimg2)
-        lineVHOvlPage, lineVOvlPage, lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt = lineIndexPage(bimg1, bimg2)
-
-        le1 = 'FeatureDistanceError[mm]: %2.1f '%lineOvlDistRslt
-        le2 = ': HorizLinePositionError[mm]: %2.2f '%lineOvlHPosRslt
-        le3 = ': TextHeightError[mm]: %2.2f '%pageHeightRslt
-        le4 = ': LineNumDifference: %2d'%pageLinesRslt
-        grade = valToGrade((lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt))
-
-        if bisecting:
-            if grade < badThr:
-                outFile = outFile+"-good"
-            else:
-                outFile = outFile+"-bad"
-
-        #pagerslt = pagerslt%((px2mm(heightErr), len(tx1)-len(tx0)))
-
-        rsltText = plainOvlRslt + le1 + le2 + le3 + le4
-        # command to write statistics to the pdf file, to be used in report creation
-
-        #options: s, p, l z
-        if overlayStyle == 'p' or overlayStyle == 'a':
-            saveRslt('p',  'Page overlay, no alignment', bimg1, bimg2, referenceFile, inFile, plainOvlRslt+le3, rsltText, outFile)
-
-        if overlayStyle == 'l' or overlayStyle == 'a':
-            saveRslt('l', 'Page overlay, vertically aligned lines', lineVOvlPage, None, referenceFile, inFile, le2, rsltText, outFile)
-
-        if overlayStyle == 'z' or overlayStyle == 'a':
-            saveRslt('z', 'Page overlay, vertically and horizontally aligned lines', lineVHOvlPage, None, referenceFile, inFile, le1, rsltText, outFile)
-
-            # side-by-side
-        if overlayStyle == 's' or overlayStyle == 'a':
-            saveRslt('s', '', img1, img2, referenceFile, inFile, le1, rsltText, outFile)
-
+    except TimeoutException as e:
         endTime = time.time()
         diffTime = int(endTime - startTime)
+        print(str(count) + "/" + str(totalCount) + " TIMEOUT2: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
+        return
 
-        print(str(count) + "/" + str(totalCount) + " SUCCESS: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
-
-    except DoException as e:
-        print("\n" + e.what + " (" + referenceFile + ", " + inFile + ")")
+    endTime = time.time()
+    diffTime = int(endTime - startTime)
+    print(str(count) + "/" + str(totalCount) + " SUCCESS: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
 
 def task_done(future):
     try:
