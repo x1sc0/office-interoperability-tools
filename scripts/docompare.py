@@ -484,7 +484,7 @@ def saveRslt(overlayStyle, title, img0, img1, name0, name1, rslt, rsltText, outF
         outimg=genside(img0, img1, s[0], s[1], name0, name1, rsltText.replace('*',' '), '')
     else:
         outimg = genoverlay(img0, title, name0, name1, rslt, img2=img1)
-    Image.fromarray(outimg).save(oname)
+    Image.fromarray(outimg).save(oname, quality=10)
     p = Popen(["exiftool", "-overwrite_original", '-Custom1="' + rsltText + '"', oname],
             stdout=DEVNULL, stderr=DEVNULL)
     p.communicate()
