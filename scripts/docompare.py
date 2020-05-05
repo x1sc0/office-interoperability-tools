@@ -104,18 +104,19 @@ def pdf2array(pdffile, res=300):
         color order is BGR
     """
     tname = tmpname()+'.tif'
-    p = Popen(["gs", "-dQUIET", "-dNOPAUSE", "-sDEVICE=tiff24nc", '-dBATCH', "-r" + str(res), "-sOutputFile=" + tname, pdffile],
-            stdout=DEVNULL, stderr=DEVNULL)
+    # Fist 5 pages only
+    p = Popen(["gs", "-dQUIET", "-dNOPAUSE", '-dFirstPage=1', '-dLastPage=5', "-sDEVICE=tiff24nc",
+        '-dBATCH', "-r" + str(res), "-sOutputFile=" + tname, pdffile], stdout=DEVNULL, stderr=DEVNULL)
     p.communicate()
 
     if not os.path.exists(tname):
         return None, None
 
     imgfile = TiffFile(tname)
-    pages = [p.asarray() for p in imgfile.pages[:10]]    # first ten pages only
-
-    shapes = [p.shape for p in imgfile.pages[:10]]
+    pages = [p.asarray() for p in imgfile.pages]
+    shapes = [p.shape for p in imgfile.pages]
     os.remove(tname)
+
     return pages, shapes
 
 def makeSingle(pages, shapes):
