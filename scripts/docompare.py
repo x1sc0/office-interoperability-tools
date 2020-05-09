@@ -25,7 +25,6 @@ except ImportError:
 from tifffile import TiffFile
 from scipy import ndimage
 import parser
-import multiprocessing
 from subprocess import Popen, DEVNULL
 from contextlib import contextmanager
 import time
@@ -45,11 +44,6 @@ def tmpname():
     f = tempfile.NamedTemporaryFile(delete=True)
     f.close()
     return f.name
-
-def clean_tmpfiles():
-    for fileName in os.listdir('/tmp'):
-        if fileName.endswith('.tif'):
-            os.remove('/tmp/' + fileName)
 
 def toBin(img, thr=200):
     #return (img < thr).astype(np.uint8)
@@ -667,18 +661,13 @@ if __name__=="__main__":
                     listFiles.append([referencePath, fileNamePath, outFile])
 
     if listFiles:
-        cpuCount = multiprocessing.cpu_count()
-        chunkSplit = cpuCount * 8
         totalCount = len(listFiles)
         count = 0
 
-        chunks = [listFiles[x:x+chunkSplit] for x in range(0, len(listFiles), chunkSplit)]
-        for chunk in chunks:
-            clean_tmpfiles()
+        for i in range(totalCount):
+            count += 1
+            try:
+                mainfunc( listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount)
+            except Exception as e:
+                print(e)
 
-            pool = multiprocessing.Pool(cpuCount)
-            for i in range(totalCount):
-                count += 1
-                pool.apply_async(mainfunc, args=(listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount))
-            pool.close()
-            pool.join()
