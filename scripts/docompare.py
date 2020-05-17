@@ -138,8 +138,7 @@ def getPagePixelOverlayIndex(iarray1, iarray2):
     #return 2.0* np.sum((itrim1+itrim2) > 1) / (np.sum(itrim1) + np.sum(itrim2))
     diff = not np.array_equal(itrim1, itrim2)
     ovl = 100*(1.0 - float(np.sum(diff)) / (np.sum(itrim2) + np.sum(itrim1)))
-    rslt = 'PagePixelOvelayIndex[%%]: %2.1f : '%ovl
-    return rslt
+    return ovl
 
 def mergeSingle(ml, tx0, sp0, tx1, sp1):
     """ merge one blob"""
@@ -470,10 +469,19 @@ def getBBox(img1, img2=None):
         min2, max2 = getBBox(img2)
         return np.minimum(min1, min2), np.maximum(max1, max2)
 
-def edit_pdf_metadata(outFile, rsltText):
-    p = Popen(["exiftool", "-overwrite_original", '-Custom1="' + rsltText + '"', outFile],
-            stdout=DEVNULL, stderr=DEVNULL)
-    p.communicate()
+def save_results(outFile, rsltText):
+    dirName = os.path.dirname(outFile)
+
+    fileName = os.path.join(dirName, 'results.txt')
+
+    if os.path.exists(fileName):
+        append_write = 'a'
+    else:
+        append_write = 'w'
+
+    f = open(fileName, append_write)
+    f.write(outFile + ":" + rsltText + '\n')
+    f.close()
 
 def px2mm(val):
     """
@@ -518,9 +526,9 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
     if pages2 == None:
         img1 = makeSingle(pages1, shapes1)
         outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
-        rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
+        rsltText = "-;-;-;-;open"
         Image.fromarray(outimg).save(outFile)
-        edit_pdf_metadata(outFile, rsltText)
+        save_results(outFile, rsltText)
         raise DoException("failed to open " + inFile)
 
     # create single image for each
@@ -532,20 +540,20 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
     if np.all(img1 == img1[0,0,0]):
         if np.all(img2 == img2[0,0,0]):
             msg= "Source and Target pdfs '%s' are empty, nothing to test"%(referenceFile)
-            rsltText = "-:0:-:0:-:0:-:0:-:0"  #dummy result string 10 dashes necessary
+            rsltText = "0;0;0;0;0"
             outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
         else:
             msg= "Source pdf '%s' is empty, Target pdf not, nothing to test"%(referenceFile)
-            rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+            rsltText = "-;-;-;-;empty"
             outimg = genoverlay(toBin(img2,binthr), msg, referenceFile, inFile, "")
     elif np.all(img2 == img2[0,0,0]):
         msg = "Target pdf '%s' is empty, test failed"%(inFile)
-        rsltText = "-:-:-:-:-:-:-:-:-:empty"  #dummy result string 10 dashes necessary
+        rsltText = "-;-;-;-;empty"
         outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
 
     if msg:
         Image.fromarray(outimg).save(outFile)
-        edit_pdf_metadata(outFile, rsltText)
+        save_results(outFile, rsltText)
 
         raise DoException(" SUCCESS: - " + msg )
 
@@ -559,18 +567,12 @@ def compare_and_create_pdfs(img1, img2, referenceFile, inFile, outFile):
     plainOvlRslt = getPagePixelOverlayIndex(bimg1, bimg2)
     lineVHOvlPage, lineVOvlPage, lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt = lineIndexPage(bimg1, bimg2)
 
-    le1 = 'FeatureDistanceError[mm]: %2.1f '%lineOvlDistRslt
-    le2 = ': HorizLinePositionError[mm]: %2.2f '%lineOvlHPosRslt
-    le3 = ': TextHeightError[mm]: %2.2f '%pageHeightRslt
-    le4 = ': LineNumDifference: %2d'%pageLinesRslt
-
-    rsltText = plainOvlRslt + le1 + le2 + le3 + le4
-    # command to write statistics to the pdf file, to be used in report creation
+    rsltText = "{};{};{};{};{}".format(plainOvlRslt, lineOvlDistRslt, lineOvlHPosRslt, pageHeightRslt, pageLinesRslt)
 
     s=np.minimum(img1.shape, img2.shape)
     outimg=genside(img1, img2, s[0], s[1], referenceFile, inFile, rsltText.replace('*',' '), '')
     Image.fromarray(outimg).save(outFile)
-    edit_pdf_metadata(outFile, rsltText)
+    save_results(outFile, rsltText)
 
 def mainfunc(referenceFile, inFile, outFile, count, totalCount):
 
@@ -585,6 +587,8 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         endTime = time.time()
         diffTime = int(endTime - startTime)
         print(str(count) + "/" + str(totalCount) + " TIMEOUT1: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
+        rsltText = "-;-;-;-;timeout"
+        save_results(outFile, rsltText)
         return
     except DoException as e:
         endTime = time.time()
@@ -601,6 +605,8 @@ def mainfunc(referenceFile, inFile, outFile, count, totalCount):
         endTime = time.time()
         diffTime = int(endTime - startTime)
         print(str(count) + "/" + str(totalCount) + " TIMEOUT2: - Comparing " + referenceFile + " and " + inFile + " in " + str(diffTime) + " seconds" )
+        rsltText = "-;-;-;-;timeout"
+        save_results(outFile, rsltText)
         return
 
     endTime = time.time()
