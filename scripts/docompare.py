@@ -470,15 +470,8 @@ def getBBox(img1, img2=None):
         min2, max2 = getBBox(img2)
         return np.minimum(min1, min2), np.maximum(max1, max2)
 
-def saveRslt(overlayStyle, title, img0, img1, name0, name1, rslt, rsltText, outFile):
-    oname = "%s-%s.pdf"%(outFile, overlayStyle)
-    if overlayStyle=='s':
-        s=np.minimum(img0.shape, img1.shape)
-        outimg=genside(img0, img1, s[0], s[1], name0, name1, rsltText.replace('*',' '), '')
-    else:
-        outimg = genoverlay(img0, title, name0, name1, rslt, img2=img1)
-    Image.fromarray(outimg).save(oname, quality=10)
-    p = Popen(["exiftool", "-overwrite_original", '-Custom1="' + rsltText + '"', oname],
+def edit_pdf_metadata(outFile, rsltText):
+    p = Popen(["exiftool", "-overwrite_original", '-Custom1="' + rsltText + '"', outFile],
             stdout=DEVNULL, stderr=DEVNULL)
     p.communicate()
 
@@ -502,18 +495,15 @@ def time_limit(seconds):
     finally:
         signal.alarm(0)
 
-
 #global definitions
 a4width=210
 a4height=297
 i2mm=25.4    # inch to mm conversion
 badThr = 3
-overlayStyle = 'a'  #output all versions by default
 progdesc="Compare two pdf documents and return some statistics"
 verbose = False
 dpi = 300
 binthr = 166
-exifcmd = 'exiftool -overwrite_original -Custom1="%s" %s >/dev/null'
 sourceid="source"
 targetid="target"
 
@@ -523,21 +513,14 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
     if pages1 == None:
         raise DoException("failed to open " + referenceFile)
 
-    badpagetxt=""
     pages2, shapes2 = pdf2array(inFile, dpi)
 
     if pages2 == None:
         img1 = makeSingle(pages1, shapes1)
         outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
         rsltText="-:-:-:-:-:-:-:-:-:open"  #dummy result string 10 dashes necessary
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
+        Image.fromarray(outimg).save(outFile)
+        edit_pdf_metadata(outFile, rsltText)
         raise DoException("failed to open " + inFile)
 
     # create single image for each
@@ -561,14 +544,8 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
         outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
 
     if msg:
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-p.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-p.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-l.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-l.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-z.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-z.pdf'))
-        Image.fromarray(outimg).save(outFile+badpagetxt+'-s.pdf', quality=10)
-        os.system(exifcmd%(rsltText, outFile+badpagetxt+'-s.pdf'))
+        Image.fromarray(outimg).save(outFile)
+        edit_pdf_metadata(outFile, rsltText)
 
         raise DoException(" SUCCESS: - " + msg )
 
@@ -590,19 +567,10 @@ def compare_and_create_pdfs(img1, img2, referenceFile, inFile, outFile):
     rsltText = plainOvlRslt + le1 + le2 + le3 + le4
     # command to write statistics to the pdf file, to be used in report creation
 
-    #options: s, p, l z
-    if overlayStyle == 'p' or overlayStyle == 'a':
-        saveRslt('p',  'Page overlay, no alignment', bimg1, bimg2, referenceFile, inFile, plainOvlRslt+le3, rsltText, outFile)
-
-    if overlayStyle == 'l' or overlayStyle == 'a':
-        saveRslt('l', 'Page overlay, vertically aligned lines', lineVOvlPage, None, referenceFile, inFile, le2, rsltText, outFile)
-
-    if overlayStyle == 'z' or overlayStyle == 'a':
-        saveRslt('z', 'Page overlay, vertically and horizontally aligned lines', lineVHOvlPage, None, referenceFile, inFile, le1, rsltText, outFile)
-
-        # side-by-side
-    if overlayStyle == 's' or overlayStyle == 'a':
-        saveRslt('s', '', img1, img2, referenceFile, inFile, le1, rsltText, outFile)
+    s=np.minimum(img1.shape, img2.shape)
+    outimg=genside(img1, img2, s[0], s[1], referenceFile, inFile, rsltText.replace('*',' '), '')
+    Image.fromarray(outimg).save(outFile)
+    edit_pdf_metadata(outFile, rsltText)
 
 def mainfunc(referenceFile, inFile, outFile, count, totalCount):
 
@@ -653,11 +621,8 @@ if __name__=="__main__":
             fileNameWithoutPDF = os.path.splitext(fileName)[0]
             referencePath = os.path.join(arguments.reference, os.path.splitext(fileNameWithoutPDF)[0] + ".pdf")
             if os.path.exists(referencePath):
-                outFile = fileNamePath + '-pair'
-                if not os.path.exists(outFile + '-l.pdf') or \
-                         not os.path.exists(outFile + '-p.pdf') or \
-                         not os.path.exists(outFile + '-s.pdf') or \
-                         not os.path.exists(outFile + '-z.pdf'):
+                outFile = fileNamePath + '-pair.pdf'
+                if not os.path.exists(outFile):
                     listFiles.append([referencePath, fileNamePath, outFile])
 
     if listFiles:
