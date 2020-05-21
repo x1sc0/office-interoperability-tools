@@ -222,10 +222,7 @@ def compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName
 
     if testName:
         for extension in config.config[typeName][componentName]["export"]:
-            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf-pair-l', 'pdf']))))
-            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf-pair-p', 'pdf']))))
-            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf-pair-s', 'pdf']))))
-            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf-pair-z', 'pdf']))))
+            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf-pair', 'pdf']))))
 
 def execute(arguments, isTest):
     scriptsPath = os.path.dirname(os.path.abspath(__file__))
