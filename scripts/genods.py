@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 #
 # This script generates a report from alist of csv files with numeric evaluations and from printed document files
 #
@@ -32,22 +32,22 @@ field = '&include_fields=id,status,summary'
 PWENC = "utf-8"
 
 def usage(desc):
-    print sys.argv[0]+':'
-    print "Usage: ", sys.argv[0], "[options]"
-    print "\t--new Path to the new build"
-    print "\t--old Path to the old build"
-    print "\t--output outfile.odt ........ report {default: "+ofname+"}"
-    print "\t--regression ....... Only display the regressions"
-    print "\t--improvement ....... Only display the improvements"
-    print "\t--odf ....... Check changes in ODF files"
-    print "\t-r rankfile.csv ....... document ranking"
-    print "\t-t tagMax1-roundtrip.csv . document tags"
-    print "\t-n tagMax1-print.csv ..... document tags"
-    print "\t-a .................... list of applications to include in report {all}"
-    print "\t-p url ................ url of the location the pair pdf file will be (manually) copied to"
-    print "\t-l .................... add only last links {default: all}"
-    print "\t-v .................... be verbose"
-    print "\t-h .................... this usage"
+    print(sys.argv[0]+':')
+    print("Usage: ", sys.argv[0], "[options]")
+    print("\t--new Path to the new build")
+    print("\t--old Path to the old build")
+    print("\t--output outfile.odt ........ report {default: "+ofname+"}")
+    print("\t--regression ....... Only display the regressions")
+    print("\t--improvement ....... Only display the improvements")
+    print("\t--odf ....... Check changes in ODF files")
+    print("\t-r rankfile.csv ....... document ranking")
+    print("\t-t tagMax1-roundtrip.csv . document tags")
+    print("\t-n tagMax1-print.csv ..... document tags")
+    print("\t-a .................... list of applications to include in report {all}")
+    print("\t-p url ................ url of the location the pair pdf file will be (manually) copied to")
+    print("\t-l .................... add only last links {default: all}")
+    print("\t-v .................... be verbose")
+    print("\t-h .................... this usage")
 
 def parsecmd(desc):
     global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
@@ -56,7 +56,7 @@ def parsecmd(desc):
         opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print str(err) # will print something like "option -a not recognized"
+        print(str(err)) # will print something like "option -a not recognized"
         usage(desc)
         sys.exit(2)
     for o, a in opts:
@@ -208,7 +208,7 @@ def getRsltTable(testType):
         for t in targetApps:
             if t.find(testType) >=0:
                 aux.append(t)
-    print aux
+    print(aux)
 
     if useapps is None:
         targetAppsSel=aux
@@ -217,7 +217,7 @@ def getRsltTable(testType):
         for t in aux:
             if t.split()[0] in useapps:
                 targetAppsSel.append(t)
-    print targetAppsSel
+    print(targetAppsSel)
 
 
     # Start the table, and describe the columns
@@ -255,7 +255,7 @@ def getRsltTable(testType):
     tr.addElement(tc)
     appcolumns=len(testLabels)
     for a in targetAppsSel:
-        print a
+        print(a)
         tc = TableCell(numbercolumnsspanned=2*(appcolumns-1), stylename="THstyle")
         tr.addElement(tc)
         p = P(stylename=tablecontents,text=unicode("Target: %s "%a, PWENC))
@@ -676,7 +676,7 @@ tagsp= None
 if tm1print:
     tagsp=loadTags(tm1print)
 
-print "targetApps: ",targetApps
+print("targetApps: ",targetApps)
 
 textdoc = OpenDocumentSpreadsheet()
 
