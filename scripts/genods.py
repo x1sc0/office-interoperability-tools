@@ -92,6 +92,92 @@ def parsecmd(desc):
         else:
             assert False, "unhandled option"
 
+def create_doc_with_styles():
+    textdoc = OpenDocumentSpreadsheet()
+
+    # Create automatic styles for the column widths.
+    # ODF Standard section 15.9.1
+    nameColStyle = Style(name="nameColStyle", family="table-column")
+    nameColStyle.addElement(TableColumnProperties(columnwidth="6cm"))
+    textdoc.automaticstyles.addElement(nameColStyle)
+
+    tagColStyle = Style(name="tagColStyle", family="table-column")
+    tagColStyle.addElement(TableColumnProperties(columnwidth="5cm"))
+    tagColStyle.addElement(ParagraphProperties(textalign="left")) #??
+    textdoc.automaticstyles.addElement(tagColStyle)
+
+    rankColStyle = Style(name="rankColStyle", family="table-column")
+    rankColStyle.addElement(TableColumnProperties(columnwidth="1.5cm"))
+    rankColStyle.addElement(ParagraphProperties(textalign="center")) #??
+    textdoc.automaticstyles.addElement(rankColStyle)
+
+    valColStyle = Style(name="valColStyle", family="table-column")
+    valColStyle.addElement(TableColumnProperties(columnwidth="0.9cm"))
+    valColStyle.addElement(ParagraphProperties(textalign="center")) #??
+    textdoc.automaticstyles.addElement(valColStyle)
+
+    linkColStyle = Style(name="linkColStyle", family="table-column")
+    linkColStyle.addElement(TableColumnProperties(columnwidth="0.3cm"))
+    linkColStyle.addElement(ParagraphProperties(textalign="center")) #??
+    textdoc.automaticstyles.addElement(linkColStyle)
+
+    # Create a style for the table content. One we can modify
+    # later in the word processor.
+    tablecontents = Style(name="Table Contents", family="paragraph")
+    tablecontents.addElement(ParagraphProperties(numberlines="false", linenumber="0"))
+    tablecontents.addElement(TextProperties(fontweight="bold"))
+    textdoc.styles.addElement(tablecontents)
+
+
+    TH = Style(name="THstyle",family="table-cell", parentstylename='Standard', displayname="Table Header")
+    TH.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(TH)
+
+    C0 = Style(name="C0style",family="table-cell", parentstylename='Standard', displayname="Color style 0")
+    C0.addElement(TableCellProperties(backgroundcolor="#00FF00"))
+    C0.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C0)
+
+    Csep = Style(name="Csepstyle",family="table-cell", parentstylename='Standard', displayname="Color style Sep ")
+    Csep.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(Csep)
+
+    C1 = Style(name="C1style",family="table-cell", parentstylename='Standard', displayname="Color style 1")
+    C1.addElement(TableCellProperties(backgroundcolor="#00FF00"))
+    C1.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C1)
+
+    C2 = Style(name="C2style",family="table-cell", parentstylename='Standard', displayname="Color style 2")
+    C2.addElement(TableCellProperties(backgroundcolor="#FFFF00"))
+    C2.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C2)
+
+    C3 = Style(name="C3style",family="table-cell", parentstylename='Standard', displayname="Color style 3")
+    C3.addElement(TableCellProperties(backgroundcolor="#FFAA00"))
+    C3.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C3)
+
+    C4 = Style(name="C4style",family="table-cell", parentstylename='Standard', displayname="Color style 4")
+    C4.addElement(TableCellProperties(backgroundcolor="#FF0000"))
+    C4.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C4)
+
+    C5 = Style(name="C5style",family="table-cell", parentstylename='Standard', displayname="Color style 5")
+    C5.addElement(TableCellProperties(backgroundcolor="#FF0000"))
+    C5.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(C5)
+
+    CB = Style(name="CBstyle",family="table-cell", parentstylename='Standard', displayname="Color style blue")
+    CB.addElement(TableCellProperties(backgroundcolor="#8888DD"))
+    CB.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(CB)
+
+    rankCellStyle = Style(name="rankCellStyle",family="table-cell", parentstylename='Standard', displayname="rankCellStyle")
+    rankCellStyle.addElement(ParagraphProperties(textalign="center"))
+    textdoc.styles.addElement(rankCellStyle)
+
+    return textdoc
+
 def loadCSV(path):
     """ Load the results
     Retuns: ID list of ints, ROI (array) of strings
@@ -678,92 +764,7 @@ if tm1print:
 
 print("targetApps: ",targetApps)
 
-textdoc = OpenDocumentSpreadsheet()
-
-# Create automatic styles for the column widths.
-# ODF Standard section 15.9.1
-nameColStyle = Style(name="nameColStyle", family="table-column")
-nameColStyle.addElement(TableColumnProperties(columnwidth="6cm"))
-textdoc.automaticstyles.addElement(nameColStyle)
-
-tagColStyle = Style(name="tagColStyle", family="table-column")
-tagColStyle.addElement(TableColumnProperties(columnwidth="5cm"))
-tagColStyle.addElement(ParagraphProperties(textalign="left")) #??
-textdoc.automaticstyles.addElement(tagColStyle)
-
-rankColStyle = Style(name="rankColStyle", family="table-column")
-rankColStyle.addElement(TableColumnProperties(columnwidth="1.5cm"))
-rankColStyle.addElement(ParagraphProperties(textalign="center")) #??
-textdoc.automaticstyles.addElement(rankColStyle)
-
-valColStyle = Style(name="valColStyle", family="table-column")
-valColStyle.addElement(TableColumnProperties(columnwidth="0.9cm"))
-valColStyle.addElement(ParagraphProperties(textalign="center")) #??
-textdoc.automaticstyles.addElement(valColStyle)
-
-linkColStyle = Style(name="linkColStyle", family="table-column")
-linkColStyle.addElement(TableColumnProperties(columnwidth="0.3cm"))
-linkColStyle.addElement(ParagraphProperties(textalign="center")) #??
-textdoc.automaticstyles.addElement(linkColStyle)
-
-# Create a style for the table content. One we can modify
-# later in the word processor.
-tablecontents = Style(name="Table Contents", family="paragraph")
-tablecontents.addElement(ParagraphProperties(numberlines="false", linenumber="0"))
-tablecontents.addElement(TextProperties(fontweight="bold"))
-textdoc.styles.addElement(tablecontents)
-
-
-TH = Style(name="THstyle",family="table-cell", parentstylename='Standard', displayname="Table Header")
-#TH.addElement(TableCellProperties(backgroundcolor="#00FF00"))
-TH.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(TH)
-
-C0 = Style(name="C0style",family="table-cell", parentstylename='Standard', displayname="Color style 0")
-C0.addElement(TableCellProperties(backgroundcolor="#00FF00"))
-C0.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C0)
-
-Csep = Style(name="Csepstyle",family="table-cell", parentstylename='Standard', displayname="Color style Sep ")
-#Csep.addElement(TableCellProperties(backgroundcolor="#FF99FF"))
-Csep.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(Csep)
-
-C1 = Style(name="C1style",family="table-cell", parentstylename='Standard', displayname="Color style 1")
-#C1.addElement(TableCellProperties(backgroundcolor="#AAFF00"))
-C1.addElement(TableCellProperties(backgroundcolor="#00FF00"))
-C1.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C1)
-
-C2 = Style(name="C2style",family="table-cell", parentstylename='Standard', displayname="Color style 2")
-C2.addElement(TableCellProperties(backgroundcolor="#FFFF00"))
-C2.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C2)
-
-C3 = Style(name="C3style",family="table-cell", parentstylename='Standard', displayname="Color style 3")
-C3.addElement(TableCellProperties(backgroundcolor="#FFAA00"))
-C3.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C3)
-
-C4 = Style(name="C4style",family="table-cell", parentstylename='Standard', displayname="Color style 4")
-C4.addElement(TableCellProperties(backgroundcolor="#FF0000"))
-C4.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C4)
-
-C5 = Style(name="C5style",family="table-cell", parentstylename='Standard', displayname="Color style 5")
-C5.addElement(TableCellProperties(backgroundcolor="#FF0000"))
-C5.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(C5)
-
-CB = Style(name="CBstyle",family="table-cell", parentstylename='Standard', displayname="Color style blue")
-CB.addElement(TableCellProperties(backgroundcolor="#8888DD"))
-CB.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(CB)
-
-rankCellStyle = Style(name="rankCellStyle",family="table-cell", parentstylename='Standard', displayname="rankCellStyle")
-#rankCellStyle.addElement(TableCellProperties(backgroundcolor="#FFFFFF"))
-rankCellStyle.addElement(ParagraphProperties(textalign="center"))
-textdoc.styles.addElement(rankCellStyle)
+textdoc = create_doc_with_styles()
 
 goodDocuments = []
 badDocuments = []
