@@ -1,13 +1,12 @@
 #! /usr/bin/python3
 #
-# This script generates a report from alist of csv files with numeric evaluations and from printed document files
+# This script generates a report from a list of results with numeric evaluations and from printed document files
 #
 # Copyright (C) 2013 Milos Sramek <milos.sramek@soit.sk>
 # Licensed under the GNU LGPL v3 - http://www.gnu.org/licenses/gpl.html
 # - or any later version.
 #
 import sys, os, getopt
-import csv
 import numpy as np
 import re
 
@@ -22,8 +21,6 @@ import requests
 import ast
 import subprocess
 
-rest_url = 'https://bugs.documentfoundation.org/rest/bug?id='
-field = '&include_fields=id,status,summary'
 
 PWENC = "utf-8"
 
@@ -64,7 +61,7 @@ def parsecmd():
         usage()
         sys.exit(2)
     for o, a in opts:
-        elif o in ("-h", "--help"):
+        if o in ("-h", "--help"):
             usage()
             sys.exit()
         elif o == "--output":
@@ -83,6 +80,32 @@ def parsecmd():
             lpath = a
         else:
             assert False, "unhandled option"
+
+def check_tdf_bugs(listBugs):
+    rest_url = 'https://bugs.documentfoundation.org/rest/bug?id='
+    field = '&include_fields=id,status,summary'
+
+    results = { 'import': [] , 'export': [] }
+    tdfBugIds = set()
+
+    for testName in listBugs:
+        if re.search('fdo[0-9]*-[0-9].', testName):
+            tdfBugIds.add(str(testName.split('fdo')[1].split('-')[0]))
+        elif re.search('tdf[0-9]*-[0-9].', testName):
+            tdfBugIds.add(str(testName.split('tdf')[1].split('-')[0]))
+
+    for i in range(0, len(tdfBugIds), 200):
+        subList = list(tdfBugIds)[i: i + 200]
+        url = rest_url + ",".join(str(x) for x in subList) + field
+        output = ast.literal_eval(requests.get(url).text)['bugs']
+        for item in output:
+            if item['status'] == 'NEW':
+                if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
+                    results['import'].append(str(item['id']))
+                elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
+                    results['export'].append(str(item['id']))
+
+    return results
 
 def create_doc_with_styles():
     textdoc = OpenDocumentSpreadsheet()
@@ -170,40 +193,40 @@ def create_doc_with_styles():
 
     return textdoc
 
-def loadCSV(path):
-    """ Load the results
-    Retuns: ID list of ints, ROI (array) of strings
-    """
-    global tdfBugs
-    # get information about the slices first
-    vcnt=5  # we expect 5 error measures
-    values = {}
-    csvfile= path + '/all.csv'
+def loadResults(newFile, oldFile):
+    results = { 'import':
+            {
+                'old': {},
+                'new': {}
+            },
+            'export':
+            {
+                'old': {},
+                'new': {}
+            }
+    }
 
-    with open(csvfile, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
-            values = {}
-            cnt = 0
-            for row in reader:
-                    if(reader.line_num == 1):
-                        apps=[]
-                        for i in range(len(row)):
-                            if row[i] != '': apps.append(row[i])
-                        apps = apps[1:]
-                    elif(reader.line_num == 2):
-                        labels=row[1:vcnt+1]
-                    elif(reader.line_num > 2):
-                        d={}
-                        for i in range(len(apps)):
-                            d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
-                        values[row[0]] = d
-                        if re.search('fdo[0-9]*-[0-9].', row[0]):
-                            tdfBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
-                        elif re.search('tdf[0-9]*-[0-9].', row[0]):
-                            tdfBugs.add(str(row[0].split('tdf')[1].split('-')[0]))
-                    cnt +=1
-                    #if cnt > 100: break
-    return apps, labels, values
+    loadFile(newFile, results, 'new')
+
+    if not checkOdf:
+        loadFile(oldFile, results, 'old')
+
+    return results
+
+def loadFile(path, results, group):
+    filePath = os.path.join(path, 'results.txt')
+
+    with open(filePath, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            testName = line.split(":")[0].strip()
+            values = line.split(":")[1].strip().split(";")
+            if 'import.pdf' in testName:
+                results['import'][group][testName] = values
+            else:
+                results['export'][group][testName] = values
+
+    return results
 
 def valToGrade(data):
     """ get grade for individual observed measures
@@ -251,8 +274,7 @@ def addAnnL(txtlist):
         ann.addElement(annp)
     return ann
 
-def getRsltTable(testType):
-    global lTdfOpenImport, lTdfOpenExport
+def getRsltTable(testType, tdfBugs):
 
     targetAppsSel=[]
     for t in targetApps:
@@ -386,11 +408,11 @@ def getRsltTable(testType):
         #Looking for improvements, we only care about fdo bugs
         if checkImprovements and ( int(progreg) < 1 or \
                 ((not re.search('fdo[0-9]*-[0-9].', testcase) or \
-                testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in lTdfOpenImport or \
-                testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in lTdfOpenExport) and
+                testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['import'] or \
+                testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['export']) and
                 (not re.search('tdf[0-9]*-[0-9].', testcase) or \
-                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenImport or \
-                testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in lTdfOpenExport))):
+                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['import'] or \
+                testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['export']))):
             continue
 
         if checkOdf:
@@ -607,37 +629,17 @@ if __name__ == "__main__":
     checkOdf = False
 
     lpath = '../'
-    #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
-
-    tdfBugs = set()
 
     parsecmd()
 
-    if lpath[-1] != '/': lpath = lpath+'/'
-    targetApps, testLabels, values = loadCSV(ifNameNew)
-    if not checkOdf:
-        targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
-        targetApps = targetApps + targetApps2
-        testLabels = testLabels + testLabels2
+    if lpath[-1] != '/':
+        lpath = lpath+'/'
 
-    tdfBugs = list(tdfBugs)
+    results = loadResults(ifNameNew, ifNameOld)
 
-    tdfStatuses = []
-    for i in range(0, len(tdfBugs), 200):
-        subList = tdfBugs[i: i + 200]
-        url = rest_url + ",".join(str(x) for x in subList) + field
-        tdfStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
-
-    lTdfOpenImport = []
-    lTdfOpenExport = []
-    for item in tdfStatuses:
-        if item['status'] == 'NEW':
-            if item['id'] == 91799:
-                print(item['summary'].lower())
-            if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
-                lTdfOpenImport.append(str(item['id']))
-            elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
-                lTdfOpenExport.append(str(item['id']))
+    tdfBugs = None
+    if checkImprovements:
+        tdfBugs = check_tdf_bugs(results['import']['new'])
 
     if not checkOdf:
         result = defaultdict(dict)
@@ -647,17 +649,15 @@ if __name__ == "__main__":
 
         values = result
 
-    print("targetApps: ",targetApps)
-
     textdoc = create_doc_with_styles()
 
     goodDocuments = []
     badDocuments = []
     lImportReg = []
     lExportReg = []
-    table = getRsltTable("print")
+    table = getRsltTable("print", tdfBugs)
     textdoc.spreadsheet.addElement(table)
-    table = getRsltTable("roundtrip")
+    table = getRsltTable("roundtrip", tdfBugs)
     textdoc.spreadsheet.addElement(table)
 
     textdoc.save(ofname)
