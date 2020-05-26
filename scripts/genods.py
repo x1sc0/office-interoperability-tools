@@ -11,10 +11,6 @@ import csv
 import numpy as np
 import re
 
-try:
-    import ipdb
-except ImportError:
-    pass
 from odf.opendocument import OpenDocumentSpreadsheet
 from odf.style import Style, TextProperties, ParagraphProperties, TableColumnProperties, TableCellProperties
 from odf.text import P, A
@@ -441,7 +437,6 @@ def getRsltTable(testType):
         #identify regressions and progressions
         progreg='x'
 
-        #ipdb.set_trace()
         if (lastgrade>mingrade).any():  #We have regression
             progreg=str(sum(lastgrade-mingrade))
         else:
