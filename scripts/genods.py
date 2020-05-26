@@ -59,7 +59,7 @@ def usage():
     print("\t-h .................... this usage")
 
 def parsecmd():
-    global ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
+    global ofname, ifNameNew, ifNameOld, lpath, checkRegressions, checkImprovements, checkOdf
 
     try:
         opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
@@ -84,14 +84,6 @@ def parsecmd():
             checkOdf = True
         elif o == "--old":
             ifNameOld = a.rstrip('\/')
-        elif o in ("-t"):
-             tm1roundtrip= a
-        elif o in ("-n"):
-             tm1print= a
-        elif o in ("-r"):
-            rfname = a
-        elif o in ("-l"):
-            showalllinks = False
         elif o in ("-p"):
             lpath = a
         else:
@@ -218,30 +210,6 @@ def loadCSV(path):
                     #if cnt > 100: break
     return apps, labels, values
 
-def loadRanks(csvfile):
-    """ Load ranking
-    Retuns: ID list of ints, ROI (array) of strings
-    """
-    # get information about the slices first
-    values = {}
-    with open(csvfile, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
-            for row in reader:
-                values[row[0].split("/")[-1]] = row[1:]
-    return values
-
-def loadTags(csvfile):
-    """ Load ranking
-    Retuns: ID list of ints, ROI (array) of strings
-    """
-    # get information about the slices first
-    values = set()
-    with open(csvfile, 'rb') as csvfile:
-            reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
-            for row in reader:
-                if len(row) > 0: values.add(row[0])
-    return values
-
 def valToGrade(data):
     """ get grade for individual observed measures
     """
@@ -289,7 +257,7 @@ def addAnnL(txtlist):
     return ann
 
 def getRsltTable(testType):
-    global ranks, showalllinks, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport, scriptPath
+    global lTdfOpenImport, lTdfOpenExport, scriptPath
 
     targetAppsSel=[]
     for t in targetApps:
@@ -390,13 +358,6 @@ def getRsltTable(testType):
         #p = P(stylename=tablecontents,text=unicode("Views",PWENC))
         #tc.addElement(p)
         #tc.addElement(addAnnL(testViewsExpl))
-
-    if ranks:
-        for c in ['rank', 'tag 1', 'tag 2', 'tag 3']:
-            tc = TableCell(stylename="THstyle")
-            tr.addElement(tc)
-            p = P(stylename=tablecontents,text=unicode(c,PWENC))
-            tc.addElement(p)
 
     total = 0
     totalRegressions = 0
@@ -562,8 +523,7 @@ def getRsltTable(testType):
                 p = P(stylename=tablecontents,text=unicode("",PWENC))
                 if os.path.exists(pdfpath + '-' + viewType + '.pdf'):
                     link = A(type="simple",href=pdfPathInDoc+"-%s.pdf"%viewType, text=">")
-                    if showalllinks or a==targetAppsSel[-1]:
-                        p.addElement(link)
+                    p.addElement(link)
                     tc.addElement(p)
                     if checkOdf:
                         if viewType == 'l':
@@ -610,37 +570,6 @@ def getRsltTable(testType):
             tc = TableCell(stylename="THstyle")
             tr.addElement(tc)
 
-        if ranks:
-            rankinfo = ranks[testcase.split('/')[-1]]
-            #tc = TableCell(valuetype="float", value=str("%.3f"%float(rankinfo[0])))
-            tc = TableCell(valuetype="float", value=str("%.3f"%float(rankinfo[0])), stylename=rankCellStyle)
-            tr.addElement(tc)
-            for c in rankinfo[1:]:
-                if testType == "print":
-                    if tagsp:
-                        if c in tagsp:
-                            tc = TableCell(stylename="C1style")
-                            p = P(stylename=C1,text=unicode(c,PWENC))
-                        else:
-                            tc = TableCell(stylename="C3style")
-                            p = P(stylename=C3,text=unicode(c,PWENC))
-                    else:
-                        tc = TableCell(stylename="tagColStyle")
-                        p = P(stylename=tagColStyle,text=unicode(c,PWENC))
-                if testType == "roundtrip":
-                    if tagsr:
-                        if c in tagsr:
-                            tc = TableCell(stylename="C1style")
-                            p = P(stylename=C1,text=unicode(c,PWENC))
-                        else:
-                            tc = TableCell(stylename="C3style")
-                            p = P(stylename=C3,text=unicode(c,PWENC))
-                    else:
-                        tc = TableCell(stylename="tagColStyle")
-                        p = P(stylename=tagColStyle,text=unicode(c,PWENC))
-                tr.addElement(tc)
-                tc.addElement(p)
-
     tr = TableRow()
     table.addElement(tr)
     tr = TableRow()
@@ -674,14 +603,9 @@ def getRsltTable(testType):
     return table
 
 if __name__ == "__main__":
-    showalllinks = True
-
     ifNameNew = ""
     ifNameOld = ""
     ofname = "rslt.ods"
-    rfname = None
-    tm1roundtrip = None
-    tm1print = None
     checkRegressions = False
     checkImprovements = False
     checkOdf = False
@@ -727,16 +651,6 @@ if __name__ == "__main__":
                 result[k].update(v)
 
         values = result
-
-    ranks= None
-    if rfname:
-        ranks=loadRanks(rfname)
-    tagsr= None
-    if tm1roundtrip:
-        tagsr=loadTags(tm1roundtrip)
-    tagsp= None
-    if tm1print:
-        tagsp=loadTags(tm1print)
 
     print("targetApps: ",targetApps)
 
