@@ -59,7 +59,7 @@ def usage():
     print("\t-h .................... this usage")
 
 def parsecmd():
-    global useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
+    global ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
 
     try:
         opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
@@ -92,8 +92,6 @@ def parsecmd():
             rfname = a
         elif o in ("-l"):
             showalllinks = False
-        elif o in ("-a"):
-            useapps = a.split()
         elif o in ("-p"):
             lpath = a
         else:
@@ -291,25 +289,12 @@ def addAnnL(txtlist):
     return ann
 
 def getRsltTable(testType):
-    global ranks, showalllinks, useapps, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport, scriptPath
-    if testType == "all":
-        aux=targetApps
-    else:
-        aux=[]
-        for t in targetApps:
-            if t.find(testType) >=0:
-                aux.append(t)
-    print(aux)
+    global ranks, showalllinks, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport, scriptPath
 
-    if useapps is None:
-        targetAppsSel=aux
-    else:
-        targetAppsSel=[]
-        for t in aux:
-            if t.split()[0] in useapps:
-                targetAppsSel.append(t)
-    print(targetAppsSel)
-
+    targetAppsSel=[]
+    for t in targetApps:
+        if t.find(testType) >=0:
+            targetAppsSel.append(t)
 
     # Start the table, and describe the columns
     table = Table(name=testType)
@@ -689,7 +674,6 @@ def getRsltTable(testType):
     return table
 
 if __name__ == "__main__":
-    useapps = None
     showalllinks = True
 
     ifNameNew = ""
@@ -766,7 +750,6 @@ if __name__ == "__main__":
     textdoc.spreadsheet.addElement(table)
     table = getRsltTable("roundtrip")
     textdoc.spreadsheet.addElement(table)
-    #table = getRsltTable("all", False)
-    #textdoc.spreadsheet.addElement(table)
+
     textdoc.save(ofname)
 
