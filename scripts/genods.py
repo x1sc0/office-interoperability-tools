@@ -50,12 +50,7 @@ def usage():
     print("\t--regression ....... Only display the regressions")
     print("\t--improvement ....... Only display the improvements")
     print("\t--odf ....... Check changes in ODF files")
-    print("\t-r rankfile.csv ....... document ranking")
-    print("\t-t tagMax1-roundtrip.csv . document tags")
-    print("\t-n tagMax1-print.csv ..... document tags")
-    print("\t-a .................... list of applications to include in report {all}")
     print("\t-p url ................ url of the location the pair pdf file will be (manually) copied to")
-    print("\t-l .................... add only last links {default: all}")
     print("\t-h .................... this usage")
 
 def parsecmd():
