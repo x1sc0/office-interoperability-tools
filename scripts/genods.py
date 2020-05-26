@@ -682,99 +682,100 @@ def getRsltTable(testType):
 
     return table
 
-progdesc = 'Derive some results from pdf tests'
-verbose = False
-useapps = None
-showalllinks = True
+if __name__ == "__main__":
+    progdesc = 'Derive some results from pdf tests'
+    verbose = False
+    useapps = None
+    showalllinks = True
 
-ifNameNew = ""
-ifNameOld = ""
-ofname = "rslt.ods"
-rfname = None
-tm1roundtrip = None
-tm1print = None
-checkRegressions = False
-checkImprovements = False
-checkOdf = False
-scriptPath = os.path.dirname(os.path.realpath(__file__))
+    ifNameNew = ""
+    ifNameOld = ""
+    ofname = "rslt.ods"
+    rfname = None
+    tm1roundtrip = None
+    tm1print = None
+    checkRegressions = False
+    checkImprovements = False
+    checkOdf = False
+    scriptPath = os.path.dirname(os.path.realpath(__file__))
 
-# we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
-testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
-testAnnotation = {
-        'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally",
-        'HLPE': "Horiz. Line Position Error / overlay of lines aligned only verically",
-        'THE': "Text Height Error / page overlay with no alignment",
-        'LND': "Line Number Difference / side by side view"
-        }
+    # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
+    testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
+    testAnnotation = {
+            'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally",
+            'HLPE': "Horiz. Line Position Error / overlay of lines aligned only verically",
+            'THE': "Text Height Error / page overlay with no alignment",
+            'LND': "Line Number Difference / side by side view"
+            }
 
 
-FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
-HLPEMax = (0.01,5,10,15,20)        #
-THEMax = (0.01,2, 4, 6,8)
-LNDMax = (0.01,0.01,0.01,0.01,0.01)
-lpath = '../'
-#lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
+    FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
+    HLPEMax = (0.01,5,10,15,20)        #
+    THEMax = (0.01,2, 4, 6,8)
+    LNDMax = (0.01,0.01,0.01,0.01,0.01)
+    lpath = '../'
+    #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
 
-tdfBugs = set()
+    tdfBugs = set()
 
-parsecmd(progdesc)
-if lpath[-1] != '/': lpath = lpath+'/'
-targetApps, testLabels, values = loadCSV(ifNameNew)
-if not checkOdf:
-    targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
-    targetApps = targetApps + targetApps2
-    testLabels = testLabels + testLabels2
+    parsecmd(progdesc)
+    if lpath[-1] != '/': lpath = lpath+'/'
+    targetApps, testLabels, values = loadCSV(ifNameNew)
+    if not checkOdf:
+        targetApps2, testLabels2, values2 = loadCSV(ifNameOld)
+        targetApps = targetApps + targetApps2
+        testLabels = testLabels + testLabels2
 
-tdfBugs = list(tdfBugs)
+    tdfBugs = list(tdfBugs)
 
-tdfStatuses = []
-for i in range(0, len(tdfBugs), 200):
-    subList = tdfBugs[i: i + 200]
-    url = rest_url + ",".join(str(x) for x in subList) + field
-    tdfStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
+    tdfStatuses = []
+    for i in range(0, len(tdfBugs), 200):
+        subList = tdfBugs[i: i + 200]
+        url = rest_url + ",".join(str(x) for x in subList) + field
+        tdfStatuses.extend(ast.literal_eval(requests.get(url).text)['bugs'])
 
-lTdfOpenImport = []
-lTdfOpenExport = []
-for item in tdfStatuses:
-    if item['status'] == 'NEW':
-        if item['id'] == 91799:
-            print(item['summary'].lower())
-        if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
-            lTdfOpenImport.append(str(item['id']))
-        elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
-            lTdfOpenExport.append(str(item['id']))
+    lTdfOpenImport = []
+    lTdfOpenExport = []
+    for item in tdfStatuses:
+        if item['status'] == 'NEW':
+            if item['id'] == 91799:
+                print(item['summary'].lower())
+            if 'fileopen' in item['summary'].lower() or 'import' in item['summary'].lower():
+                lTdfOpenImport.append(str(item['id']))
+            elif 'filesave' in item['summary'].lower() or 'export' in item['summary'].lower():
+                lTdfOpenExport.append(str(item['id']))
 
-if not checkOdf:
-    result = defaultdict(dict)
-    for d in values, values2:
-        for k, v in d.iteritems():
-            result[k].update(v)
+    if not checkOdf:
+        result = defaultdict(dict)
+        for d in values, values2:
+            for k, v in d.iteritems():
+                result[k].update(v)
 
-    values = result
+        values = result
 
-ranks= None
-if rfname:
-    ranks=loadRanks(rfname)
-tagsr= None
-if tm1roundtrip:
-    tagsr=loadTags(tm1roundtrip)
-tagsp= None
-if tm1print:
-    tagsp=loadTags(tm1print)
+    ranks= None
+    if rfname:
+        ranks=loadRanks(rfname)
+    tagsr= None
+    if tm1roundtrip:
+        tagsr=loadTags(tm1roundtrip)
+    tagsp= None
+    if tm1print:
+        tagsp=loadTags(tm1print)
 
-print("targetApps: ",targetApps)
+    print("targetApps: ",targetApps)
 
-textdoc = create_doc_with_styles()
+    textdoc = create_doc_with_styles()
 
-goodDocuments = []
-badDocuments = []
-lImportReg = []
-lExportReg = []
-table = getRsltTable("print")
-textdoc.spreadsheet.addElement(table)
-table = getRsltTable("roundtrip")
-textdoc.spreadsheet.addElement(table)
-#table = getRsltTable("all", False)
-#textdoc.spreadsheet.addElement(table)
-textdoc.save(ofname)
+    goodDocuments = []
+    badDocuments = []
+    lImportReg = []
+    lExportReg = []
+    table = getRsltTable("print")
+    textdoc.spreadsheet.addElement(table)
+    table = getRsltTable("roundtrip")
+    textdoc.spreadsheet.addElement(table)
+    #table = getRsltTable("all", False)
+    #textdoc.spreadsheet.addElement(table)
+    textdoc.save(ofname)
 
