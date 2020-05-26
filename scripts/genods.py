@@ -257,7 +257,7 @@ def addAnnL(txtlist):
     return ann
 
 def getRsltTable(testType):
-    global lTdfOpenImport, lTdfOpenExport, scriptPath
+    global lTdfOpenImport, lTdfOpenExport
 
     targetAppsSel=[]
     for t in targetApps:
@@ -501,6 +501,7 @@ def getRsltTable(testType):
                         if os.path.exists(newInput):
                             output = pdfpath + '-comparison.pdf'
                             if not os.path.exists(output):
+                                scriptPath = os.path.dirname(os.path.realpath(__file__))
                                 subprocess.call(
                                         ['python', scriptPath + '/docompare.py',
                                             '-c', '-a', '-o' + output, oldInput, newInput])
@@ -609,7 +610,6 @@ if __name__ == "__main__":
     checkRegressions = False
     checkImprovements = False
     checkOdf = False
-    scriptPath = os.path.dirname(os.path.realpath(__file__))
 
     lpath = '../'
     #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
