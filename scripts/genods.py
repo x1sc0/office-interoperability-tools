@@ -93,111 +93,111 @@ def parsecmd(desc):
             assert False, "unhandled option"
 
 def loadCSV(path):
-        """ Load the results
-        Retuns: ID list of ints, ROI (array) of strings
-        """
-        global tdfBugs
-        # get information about the slices first
-        vcnt=5  # we expect 5 error measures
-        values = {}
-        csvfile= path + '/all.csv'
+    """ Load the results
+    Retuns: ID list of ints, ROI (array) of strings
+    """
+    global tdfBugs
+    # get information about the slices first
+    vcnt=5  # we expect 5 error measures
+    values = {}
+    csvfile= path + '/all.csv'
 
-        with open(csvfile, 'rb') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
-                values = {}
-                cnt = 0
-                for row in reader:
-                        if(reader.line_num == 1):
-                            apps=[]
-                            for i in range(len(row)):
-                                if row[i] != '': apps.append(row[i])
-                            apps = apps[1:]
-                        elif(reader.line_num == 2):
-                            labels=row[1:vcnt+1]
-                        elif(reader.line_num > 2):
-                            d={}
-                            for i in range(len(apps)):
-                                d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
-                            values[row[0]] = d
-                            if re.search('fdo[0-9]*-[0-9].', row[0]):
-                                tdfBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
-                            elif re.search('tdf[0-9]*-[0-9].', row[0]):
-                                tdfBugs.add(str(row[0].split('tdf')[1].split('-')[0]))
-                        cnt +=1
-                        #if cnt > 100: break
-        return apps, labels, values
+    with open(csvfile, 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
+            values = {}
+            cnt = 0
+            for row in reader:
+                    if(reader.line_num == 1):
+                        apps=[]
+                        for i in range(len(row)):
+                            if row[i] != '': apps.append(row[i])
+                        apps = apps[1:]
+                    elif(reader.line_num == 2):
+                        labels=row[1:vcnt+1]
+                    elif(reader.line_num > 2):
+                        d={}
+                        for i in range(len(apps)):
+                            d[apps[i]]=row[1+vcnt*i: 1+vcnt*(i+1)]
+                        values[row[0]] = d
+                        if re.search('fdo[0-9]*-[0-9].', row[0]):
+                            tdfBugs.add(str(row[0].split('fdo')[1].split('-')[0]))
+                        elif re.search('tdf[0-9]*-[0-9].', row[0]):
+                            tdfBugs.add(str(row[0].split('tdf')[1].split('-')[0]))
+                    cnt +=1
+                    #if cnt > 100: break
+    return apps, labels, values
 
 def loadRanks(csvfile):
-        """ Load ranking
-        Retuns: ID list of ints, ROI (array) of strings
-        """
-        # get information about the slices first
-        values = {}
-        with open(csvfile, 'rb') as csvfile:
-                reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
-                for row in reader:
-                    values[row[0].split("/")[-1]] = row[1:]
-        return values
+    """ Load ranking
+    Retuns: ID list of ints, ROI (array) of strings
+    """
+    # get information about the slices first
+    values = {}
+    with open(csvfile, 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
+            for row in reader:
+                values[row[0].split("/")[-1]] = row[1:]
+    return values
 
 def loadTags(csvfile):
-        """ Load ranking
-        Retuns: ID list of ints, ROI (array) of strings
-        """
-        # get information about the slices first
-        values = set()
-        with open(csvfile, 'rb') as csvfile:
-                reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
-                for row in reader:
-                    if len(row) > 0: values.add(row[0])
-        return values
+    """ Load ranking
+    Retuns: ID list of ints, ROI (array) of strings
+    """
+    # get information about the slices first
+    values = set()
+    with open(csvfile, 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=' ', quoting=csv.QUOTE_NONE)
+            for row in reader:
+                if len(row) > 0: values.add(row[0])
+    return values
 
 #testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
 def valToGrade(data):
-        """ get grade for individual observed measures
-        """
-        #if checking roundtrip, print is ['', '', '', '', ''] or viceversa
-        if not data or  '' in data or data[-1] == 'timeout':
-            return [8,8,8,8]
+    """ get grade for individual observed measures
+    """
+    #if checking roundtrip, print is ['', '', '', '', ''] or viceversa
+    if not data or  '' in data or data[-1] == 'timeout':
+        return [8,8,8,8]
 
-        global FDEMax, HLPEMax, THEMax, LNDMax
-        if data[-1] == "empty":
-            return [6,6,6,6]
-        if data[-1] == "open":
-            return [7,7,7,7]
-        FDEVal=5
-        for i in range(len(FDEMax)):
-            if FDEMax[i] >float(data[0]):
-                FDEVal=i
-                break
-        HLPEVal=5
-        for i in range(len(HLPEMax)):
-            if HLPEMax[i] > float(data[1]):
-                HLPEVal=i
-                break
-        THEVal=5
-        for i in range(len(THEMax)):
-            if THEMax[i] > float(data[2]):
-                THEVal=i
-                break
-        LNDVal=5
-        for i in range(len(LNDMax)):
-            if LNDMax[i] > abs(float(data[3])):
-                LNDVal=i
-                break
-        return [FDEVal, HLPEVal, THEVal, LNDVal]
+    global FDEMax, HLPEMax, THEMax, LNDMax
+    if data[-1] == "empty":
+        return [6,6,6,6]
+    if data[-1] == "open":
+        return [7,7,7,7]
+    FDEVal=5
+    for i in range(len(FDEMax)):
+        if FDEMax[i] >float(data[0]):
+            FDEVal=i
+            break
+    HLPEVal=5
+    for i in range(len(HLPEMax)):
+        if HLPEMax[i] > float(data[1]):
+            HLPEVal=i
+            break
+    THEVal=5
+    for i in range(len(THEMax)):
+        if THEMax[i] > float(data[2]):
+            THEVal=i
+            break
+    LNDVal=5
+    for i in range(len(LNDMax)):
+        if LNDMax[i] > abs(float(data[3])):
+            LNDVal=i
+            break
+    return [FDEVal, HLPEVal, THEVal, LNDVal]
 
 def addAnn(txt):
-        ann=Annotation(width="10cm")
-        annp = P(stylename=tablecontents,text=unicode(txt,PWENC))
-        ann.addElement(annp)
-        return ann
+    ann=Annotation(width="10cm")
+    annp = P(stylename=tablecontents,text=unicode(txt,PWENC))
+    ann.addElement(annp)
+    return ann
 
 def addAnnL(txtlist):
-        ann=Annotation(width="10cm")
-        for t in txtlist:
-            annp = P(stylename=tablecontents,text=unicode(t,PWENC))
-            ann.addElement(annp)
-        return ann
+    ann=Annotation(width="10cm")
+    for t in txtlist:
+        annp = P(stylename=tablecontents,text=unicode(t,PWENC))
+        ann.addElement(annp)
+    return ann
 
 def getRsltTable(testType):
     global ranks, showalllinks, useapps, tagsr, tagsp, lTdfOpenImport, lTdfOpenExport, scriptPath
