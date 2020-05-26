@@ -41,7 +41,7 @@ HLPEMax = (0.01,5,10,15,20)        #
 THEMax = (0.01,2, 4, 6,8)
 LNDMax = (0.01,0.01,0.01,0.01,0.01)
 
-def usage(desc):
+def usage():
     print(sys.argv[0]+':')
     print("Usage: ", sys.argv[0], "[options]")
     print("\t--new Path to the new build")
@@ -56,24 +56,21 @@ def usage(desc):
     print("\t-a .................... list of applications to include in report {all}")
     print("\t-p url ................ url of the location the pair pdf file will be (manually) copied to")
     print("\t-l .................... add only last links {default: all}")
-    print("\t-v .................... be verbose")
     print("\t-h .................... this usage")
 
-def parsecmd(desc):
-    global verbose, useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
+def parsecmd():
+    global useapps, ofname, ifNameNew, ifNameOld, lpath, rfname, showalllinks, tm1print, tm1roundtrip, checkRegressions, checkImprovements, checkOdf
 
     try:
-        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'verbose', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
+        opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(str(err)) # will print something like "option -a not recognized"
-        usage(desc)
+        usage()
         sys.exit(2)
     for o, a in opts:
-        if o in ("-v", "--verbose"):
-            verbose = True
         elif o in ("-h", "--help"):
-            usage(desc)
+            usage()
             sys.exit()
         elif o == "--output":
             ofname = a
@@ -692,8 +689,6 @@ def getRsltTable(testType):
     return table
 
 if __name__ == "__main__":
-    progdesc = 'Derive some results from pdf tests'
-    verbose = False
     useapps = None
     showalllinks = True
 
@@ -713,7 +708,8 @@ if __name__ == "__main__":
 
     tdfBugs = set()
 
-    parsecmd(progdesc)
+    parsecmd()
+
     if lpath[-1] != '/': lpath = lpath+'/'
     targetApps, testLabels, values = loadCSV(ifNameNew)
     if not checkOdf:
