@@ -31,6 +31,20 @@ field = '&include_fields=id,status,summary'
 
 PWENC = "utf-8"
 
+# we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
+testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
+testAnnotation = {
+    'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally",
+    'HLPE': "Horiz. Line Position Error / overlay of lines aligned only verically",
+    'THE': "Text Height Error / page overlay with no alignment",
+    'LND': "Line Number Difference / side by side view"
+}
+
+FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
+HLPEMax = (0.01,5,10,15,20)        #
+THEMax = (0.01,2, 4, 6,8)
+LNDMax = (0.01,0.01,0.01,0.01,0.01)
+
 def usage(desc):
     print(sys.argv[0]+':')
     print("Usage: ", sys.argv[0], "[options]")
@@ -237,7 +251,6 @@ def loadTags(csvfile):
                 if len(row) > 0: values.add(row[0])
     return values
 
-#testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
 def valToGrade(data):
     """ get grade for individual observed measures
     """
@@ -245,7 +258,6 @@ def valToGrade(data):
     if not data or  '' in data or data[-1] == 'timeout':
         return [8,8,8,8]
 
-    global FDEMax, HLPEMax, THEMax, LNDMax
     if data[-1] == "empty":
         return [6,6,6,6]
     if data[-1] == "open":
@@ -381,6 +393,7 @@ def getRsltTable(testType):
     p = P(stylename=tablecontents,text=unicode("Sum all",PWENC))
     tc.addElement(p)
     tc.addElement(addAnn("Sum of grades for all tested versions"))
+
     for a in targetAppsSel:
         for tl in range(1, len(testLabelsShort)):   # we do not show the PPOI value
             tc = TableCell(numbercolumnsspanned=2,stylename="THstyle")
@@ -399,6 +412,7 @@ def getRsltTable(testType):
         #p = P(stylename=tablecontents,text=unicode("Views",PWENC))
         #tc.addElement(p)
         #tc.addElement(addAnnL(testViewsExpl))
+
     if ranks:
         for c in ['rank', 'tag 1', 'tag 2', 'tag 3']:
             tc = TableCell(stylename="THstyle")
@@ -699,20 +713,6 @@ if __name__ == "__main__":
     checkOdf = False
     scriptPath = os.path.dirname(os.path.realpath(__file__))
 
-    # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
-    testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
-    testAnnotation = {
-            'FDE': "Feature Distance Error / overlay of lines aligned verically and horizontally",
-            'HLPE': "Horiz. Line Position Error / overlay of lines aligned only verically",
-            'THE': "Text Height Error / page overlay with no alignment",
-            'LND': "Line Number Difference / side by side view"
-            }
-
-
-    FDEMax = (0.01,0.5,1,2,4)        #0.5: difference of perfectly fitting AOO/LOO and MS document owing to different character rendering
-    HLPEMax = (0.01,5,10,15,20)        #
-    THEMax = (0.01,2, 4, 6,8)
-    LNDMax = (0.01,0.01,0.01,0.01,0.01)
     lpath = '../'
     #lpath = 'http://bender.dam.fmph.uniba.sk/~milos/'
 
