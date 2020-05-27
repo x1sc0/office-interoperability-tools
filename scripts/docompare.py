@@ -515,15 +515,21 @@ binthr = 166
 sourceid="source"
 targetid="target"
 
-def load_documents_and_make_singles(referenceFile, inFile, outFile):
+def create_overlayPDF(referenceFile, inFile, outFile):
+    #Used in genods.py
+    img1, img2 = load_documents_and_make_singles(referenceFile, inFile, outFile, True)
+    outimg = genoverlay(toBin(img1,binthr), "", referenceFile, inFile, "", toBin(img2,binthr))
+    Image.fromarray(outimg).save(outFile)
+
+def load_documents_and_make_singles(referenceFile, inFile, outFile, isCreatingOverlay=False):
     #load documents
     pages1, shapes1 = pdf2array(referenceFile, dpi)
-    if pages1 == None:
+    if not isCreatingOverlay and pages1 == None:
         raise DoException("failed to open " + referenceFile)
 
     pages2, shapes2 = pdf2array(inFile, dpi)
 
-    if pages2 == None:
+    if not create_overlayPDF and pages2 == None:
         img1 = makeSingle(pages1, shapes1)
         outimg = genoverlay(toBin(img1,binthr), "target file '%s' cannot be loaded, test failed"%(inFile), referenceFile, inFile, "")
         rsltText = "-;-;-;-;open"
@@ -551,7 +557,7 @@ def load_documents_and_make_singles(referenceFile, inFile, outFile):
         rsltText = "-;-;-;-;empty"
         outimg = genoverlay(toBin(img1,binthr), msg, referenceFile, inFile, "")
 
-    if msg:
+    if not isCreatingOverlay and msg:
         Image.fromarray(outimg).save(outFile)
         save_results(outFile, rsltText)
 

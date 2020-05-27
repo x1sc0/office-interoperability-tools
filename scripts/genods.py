@@ -15,14 +15,11 @@ from odf.style import Style, TextProperties, ParagraphProperties, TableColumnPro
 from odf.text import P, A
 from odf.table import Table, TableColumn, TableRow, TableCell
 from odf.office import Annotation
-from collections import defaultdict
+
+from docompare import create_overlayPDF
 
 import requests
 import ast
-import subprocess
-
-
-PWENC = "utf-8"
 
 # we assume here this order in the testLabels list:[' PagePixelOvelayIndex[%]', ' FeatureDistanceError[mm]', ' HorizLinePositionError[mm]', ' TextHeightError[mm]', ' LineNumDifference']
 testLabelsShort=['PPOI','FDE', 'HLPE', 'THE', 'LND']
@@ -47,11 +44,10 @@ def usage():
     print("\t--regression ....... Only display the regressions")
     print("\t--improvement ....... Only display the improvements")
     print("\t--odf ....... Check changes in ODF files")
-    print("\t-p url ................ url of the location the pair pdf file will be (manually) copied to")
     print("\t-h .................... this usage")
 
 def parsecmd():
-    global ofname, ifNameNew, ifNameOld, lpath, checkRegressions, checkImprovements, checkOdf
+    global ofname, newPath, oldPath, checkRegressions, checkImprovements, checkOdf
 
     try:
         opts, args  = getopt.getopt(sys.argv[1:], "hvl:a:p:r:t:n:", ['help', 'new=', 'old=', 'output=', 'regression', 'improvement', 'odf'])
@@ -67,7 +63,7 @@ def parsecmd():
         elif o == "--output":
             ofname = a
         elif o == "--new":
-            ifNameNew = a.rstrip('\/')
+            newPath = a
         elif o == "--regression":
             checkRegressions = True
         elif o == "--improvement":
@@ -75,11 +71,13 @@ def parsecmd():
         elif o == "--odf":
             checkOdf = True
         elif o == "--old":
-            ifNameOld = a.rstrip('\/')
-        elif o in ("-p"):
-            lpath = a
+            oldPath = a
         else:
             assert False, "unhandled option"
+
+    if os.path.isabs(oldPath) or os.path.isabs(newPath):
+        print("ERROR: use relative pathes")
+        sys.exit(1)
 
 def check_tdf_bugs(listBugs):
     rest_url = 'https://bugs.documentfoundation.org/rest/bug?id='
@@ -113,7 +111,7 @@ def create_doc_with_styles():
     # Create automatic styles for the column widths.
     # ODF Standard section 15.9.1
     nameColStyle = Style(name="nameColStyle", family="table-column")
-    nameColStyle.addElement(TableColumnProperties(columnwidth="6cm"))
+    nameColStyle.addElement(TableColumnProperties(columnwidth="8cm"))
     textdoc.automaticstyles.addElement(nameColStyle)
 
     tagColStyle = Style(name="tagColStyle", family="table-column")
@@ -138,7 +136,7 @@ def create_doc_with_styles():
 
     # Create a style for the table content. One we can modify
     # later in the word processor.
-    tablecontents = Style(name="Table Contents", family="paragraph")
+    tablecontents = Style(name="tablecontents", family="paragraph")
     tablecontents.addElement(ParagraphProperties(numberlines="false", linenumber="0"))
     tablecontents.addElement(TextProperties(fontweight="bold"))
     textdoc.styles.addElement(tablecontents)
@@ -193,16 +191,16 @@ def create_doc_with_styles():
 
     return textdoc
 
-def loadResults(newFile, oldFile):
+def loadResults(oldFile, newFile):
     results = { 'import':
             {
-                'old': {},
-                'new': {}
+                'new': {'tests':{}},
+                'old': {'tests':{}},
             },
             'export':
             {
-                'old': {},
-                'new': {}
+                'new': {'tests':{}},
+                'old': {'tests':{}},
             }
     }
 
@@ -215,16 +213,18 @@ def loadResults(newFile, oldFile):
 
 def loadFile(path, results, group):
     filePath = os.path.join(path, 'results.txt')
+    results['import'][group]['path'] = path
+    results['export'][group]['path'] = path
 
     with open(filePath, 'r') as f:
         lines = f.readlines()
         for line in lines:
-            testName = line.split(":")[0].strip()
+            testName = os.path.split(line.split(":")[0].strip())[1]
             values = line.split(":")[1].strip().split(";")
             if 'import.pdf' in testName:
-                results['import'][group][testName] = values
+                results['import'][group]['tests'][testName] = values
             else:
-                results['export'][group][testName] = values
+                results['export'][group]['tests'][testName] = values
 
     return results
 
@@ -263,43 +263,33 @@ def valToGrade(data):
 
 def addAnn(txt):
     ann=Annotation(width="10cm")
-    annp = P(stylename=tablecontents,text=unicode(txt,PWENC))
+    annp = P(stylename="tablecontents", text=str(txt))
     ann.addElement(annp)
     return ann
 
-def addAnnL(txtlist):
-    ann=Annotation(width="10cm")
-    for t in txtlist:
-        annp = P(stylename=tablecontents,text=unicode(t,PWENC))
-        ann.addElement(annp)
-    return ann
+def getRsltTable(testType, results, tdfBugs):
 
-def getRsltTable(testType, tdfBugs):
-
-    targetAppsSel=[]
-    for t in targetApps:
-        if t.find(testType) >=0:
-            targetAppsSel.append(t)
+    targetAppsSel= results[testType].keys()
 
     # Start the table, and describe the columns
     table = Table(name=testType)
-    table.addElement(TableColumn(numbercolumnsrepeated=1,stylename=nameColStyle))
-    table.addElement(TableColumn(stylename=linkColStyle))
+    table.addElement(TableColumn(numbercolumnsrepeated=1, stylename="nameColStyle"))
+    table.addElement(TableColumn(stylename="linkColStyle"))
     if checkOdf:
-        table.addElement(TableColumn(numbercolumnsrepeated=3,stylename=rankColStyle))
+        table.addElement(TableColumn(numbercolumnsrepeated=3,stylename="rankColStyle"))
     else:
-        table.addElement(TableColumn(numbercolumnsrepeated=4,stylename=rankColStyle))
+        table.addElement(TableColumn(numbercolumnsrepeated=4,stylename="rankColStyle"))
 
     for i in targetAppsSel:
-        for i in range(len(testLabels)-1):
-            table.addElement(TableColumn(stylename=valColStyle))
-            table.addElement(TableColumn(stylename=linkColStyle))
-        table.addElement(TableColumn(stylename=rankColStyle))
-        table.addElement(TableColumn(stylename=linkColStyle))
-    table.addElement(TableColumn(stylename=rankColStyle))
-    table.addElement(TableColumn(stylename=tagColStyle))
-    table.addElement(TableColumn(stylename=tagColStyle))
-    table.addElement(TableColumn(stylename=tagColStyle))
+        for i in range(len(testLabelsShort)-1):
+            table.addElement(TableColumn(stylename="valColStyle"))
+            table.addElement(TableColumn(stylename="linkColStyle"))
+        table.addElement(TableColumn(stylename="rankColStyle"))
+        table.addElement(TableColumn(stylename="linkColStyle"))
+    table.addElement(TableColumn(stylename="rankColStyle"))
+    table.addElement(TableColumn(stylename="tagColStyle"))
+    table.addElement(TableColumn(stylename="tagColStyle"))
+    table.addElement(TableColumn(stylename="tagColStyle"))
 
     #First row: application names
     tr = TableRow()
@@ -314,12 +304,11 @@ def getRsltTable(testType, tdfBugs):
     tr.addElement(tc)
     tc = TableCell() #empty cell
     tr.addElement(tc)
-    appcolumns=len(testLabels)
+    appcolumns=len(testLabelsShort)
     for a in targetAppsSel:
-        print(a)
         tc = TableCell(numbercolumnsspanned=2*(appcolumns-1), stylename="THstyle")
         tr.addElement(tc)
-        p = P(stylename=tablecontents,text=unicode("Target: %s "%a, PWENC))
+        p = P(stylename="tablecontents",text="Target: " + results[testType][a]['path'])
         tc.addElement(p)
         for i in range(2*(appcolumns-1)-1): # create empty cells for the merged one
             tc = TableCell()
@@ -331,29 +320,29 @@ def getRsltTable(testType, tdfBugs):
     table.addElement(tr)
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Test case",PWENC))
+    p = P(stylename="tablecontents",text="Test case")
     tc.addElement(p)
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
     if not checkOdf:
         tc = TableCell(stylename="THstyle") #empty cell
         tr.addElement(tc)
-        p = P(stylename=tablecontents,text=unicode("P/R",PWENC))
+        p = P(stylename="tablecontents",text="P/R")
         tc.addElement(p)
         tc.addElement(addAnn("Negative: progression, positive: regression, 0: no change"))
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Max last",PWENC))
+    p = P(stylename="tablecontents",text="Max last")
     tc.addElement(p)
     tc.addElement(addAnn("Max grade for the last LO version"))
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Sum last",PWENC))
+    p = P(stylename="tablecontents",text="Sum last")
     tc.addElement(p)
     tc.addElement(addAnn("Sum of grades for the last LO version"))
     tc = TableCell(stylename="THstyle") #empty cell
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Sum all",PWENC))
+    p = P(stylename="tablecontents",text="Sum all")
     tc.addElement(p)
     tc.addElement(addAnn("Sum of grades for all tested versions"))
 
@@ -361,7 +350,7 @@ def getRsltTable(testType, tdfBugs):
         for tl in range(1, len(testLabelsShort)):   # we do not show the PPOI value
             tc = TableCell(numbercolumnsspanned=2,stylename="THstyle")
             tr.addElement(tc)
-            p = P(stylename=tablecontents,text=unicode(testLabelsShort[-tl],PWENC))
+            p = P(stylename="tablecontents",text=testLabelsShort[-tl])
             tc.addElement(p)
             tc.addElement(addAnn(testAnnotation[testLabelsShort[-tl]]))
             tc = TableCell()    #the merged cell
@@ -370,20 +359,14 @@ def getRsltTable(testType, tdfBugs):
         tr.addElement(tc)
         tc = TableCell(stylename="THstyle")
         tr.addElement(tc)
-        #tc = TableCell(stylename="THstyle")
-        #tr.addElement(tc)
-        #p = P(stylename=tablecontents,text=unicode("Views",PWENC))
-        #tc.addElement(p)
-        #tc.addElement(addAnnL(testViewsExpl))
 
     total = 0
     totalRegressions = 0
     totalEmpty = 0
     totalTimeOut = 0
-    for testcase in values.keys():
-
+    for testcase in results[testType]['new']['tests'].keys():
         try:
-            agrades = np.array([valToGrade(values[testcase][a][1:]) for a in targetAppsSel])
+            agrades = np.array([valToGrade(results[testType][a]['tests'][testcase][1:]) for a in targetAppsSel])
             if np.array_equal(agrades[0], [8,8,8,8]):
                 continue
             lastgrade=agrades[-1]
@@ -408,15 +391,15 @@ def getRsltTable(testType, tdfBugs):
         #Looking for improvements, we only care about fdo bugs
         if checkImprovements and ( int(progreg) < 1 or \
                 ((not re.search('fdo[0-9]*-[0-9].', testcase) or \
-                testType == 'print' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['import'] or \
-                testType == 'roundtrip' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['export']) and
+                testType == 'import' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['import'] or \
+                testType == 'export' and testcase.split('fdo')[1].split('-')[0] not in tdfBugs['export']) and
                 (not re.search('tdf[0-9]*-[0-9].', testcase) or \
-                testType == 'print' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['import'] or \
-                testType == 'roundtrip' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['export']))):
+                testType == 'import' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['import'] or \
+                testType == 'export' and testcase.split('tdf')[1].split('-')[0] not in tdfBugs['export']))):
             continue
 
         if checkOdf:
-            allsum = sum([sum(valToGrade(values[testcase][a][1:])) for a in targetAppsSel] )
+            allsum = sum([sum(valToGrade(results[testType][a]['tests'][testcase][1:])) for a in targetAppsSel] )
             if allsum <= 5:
                 continue
 
@@ -424,9 +407,9 @@ def getRsltTable(testType, tdfBugs):
 
         #Avoid showing import regressions as export regressions
         if checkRegressions:
-            if testType == "print":
+            if testType == "import":
                 lImportReg.append(name)
-            elif testType == "roundtrip" and not np.array_equal(agrades[0], [7,7,7,7]):
+            elif testType == "export" and not np.array_equal(agrades[0], [7,7,7,7]):
                 if name in lImportReg or name in lExportReg:
                     continue
                 lExportReg.append(name)
@@ -443,8 +426,7 @@ def getRsltTable(testType, tdfBugs):
         table.addElement(tr)
         tc = TableCell()
         tr.addElement(tc)
-        #p = P(stylename=tablecontents,text=unicode(testcase,PWENC))
-        p = P(stylename=tablecontents,text=unicode("",PWENC))
+        p = P(stylename="tablecontents")
         #TODO: Fix doc link in roundtrip
         if re.search('fdo[0-9]*-[0-9].', testcase):
             ref = 'https://bugs.documentfoundation.org/show_bug.cgi?id=' + str(testcase.split('fdo')[1].split('-')[0])
@@ -468,7 +450,7 @@ def getRsltTable(testType, tdfBugs):
             ref = 'https://bugs.gentoo.org/show_bug.cgi?id=' + str(testcase.split('gentoo')[1].split('-')[0])
             link = A(type="simple",href="%s"%ref, text=testcase)
         else:
-            link = A(type="simple",href="%s%s"%(lpath,testcase), text=testcase)
+            link = A(type="simple",href="%s"%('../' + testcase), text=testcase)
         p.addElement(link)
         tc.addElement(p)
 
@@ -480,57 +462,42 @@ def getRsltTable(testType, tdfBugs):
             tr.addElement(tc)
 
         # max last
-        lastmax = max([valToGrade(values[testcase][a][1:]) for a in targetAppsSel][-1])
+        lastmax = max([valToGrade(results[testType][a]['tests'][testcase][1:]) for a in targetAppsSel][-1])
         tc = TableCell(valuetype="float", value=str(lastmax))
         tr.addElement(tc)
 
         # sum last
-        lastsum = sum([valToGrade(values[testcase][a][1:]) for a in targetAppsSel][-1])
+        lastsum = sum([valToGrade(results[testType][a]['tests'][testcase][1:]) for a in targetAppsSel][-1])
         tc = TableCell(valuetype="float", value=str(lastsum))
         tr.addElement(tc)
 
         # sum all
-        allsum = sum([sum(valToGrade(values[testcase][a][1:])) for a in targetAppsSel] )
+        allsum = sum([sum(valToGrade(results[testType][a]['tests'][testcase][1:])) for a in targetAppsSel] )
         tc = TableCell(valuetype="float", value=str(allsum))
         tr.addElement(tc)
 
         for a in targetAppsSel:
-            grades = valToGrade(values[testcase][a][1:])
-            #grades = values[testcase][a][1:]
-            #for val in values[testcase][a][1:]:   # we do not show the PPOI value
-            #print grades
-            viewTypes=['s','p','l','z']
-            app, ttype = a.split()
-            subapp = app.split('-')[0]
+            grades = valToGrade(results[testType][a]['tests'][testcase][1:])
+            pdfPath = os.path.join(results[testType][a]['path'], testcase)
 
-            filename=testcase.split("/",1)[-1]  # get subdirectories, too
+            if not checkOdf and a == 'new':
+                oldFile = os.path.join(results[testType]['old']['path'], testcase).split('-pair.pdf')[0]
+                if os.path.exists(oldFile):
+                    newFile = os.path.join(results[testType]['new']['path'], testcase).split('-pair.pdf')[0]
+                    if os.path.exists(newFile):
+                        outputFile = oldFile + '-comparison.pdf'
+                        if not os.path.exists(outputFile):
+                            print("Creating " + outputFile)
+                            create_overlayPDF(oldFile, newFile, outputFile)
 
-            if ttype=="roundtrip":
-                pdfpath=app+"/"+filename+".export"
-            else:
-                pdfpath=app+"/"+filename+".import"
+                        p = P(stylename="tablecontents",text="")
+                        comparisonLink = A(type="simple",href='../' + outputFile, text=">")
+                        p.addElement(comparisonLink)
+                        tComparison.addElement(p)
 
-            if not checkOdf:
-                if ifNameOld == app:
-                    oldInput = pdfpath + '.pdf'
-                    if os.path.exists(oldInput):
-                        newInput = pdfpath.replace(app, ifNameNew) + '.pdf'
-                        if os.path.exists(newInput):
-                            output = pdfpath + '-comparison.pdf'
-                            if not os.path.exists(output):
-                                scriptPath = os.path.dirname(os.path.realpath(__file__))
-                                subprocess.call(
-                                        ['python', scriptPath + '/docompare.py',
-                                            '-c', '-a', '-o' + output, oldInput, newInput])
-                            p = P(stylename=tablecontents,text=unicode("",PWENC))
-                            pdfPathInDoc = lpath + output
-                            comparisonLink = A(type="simple",href=pdfPathInDoc, text=">")
-                            p.addElement(comparisonLink)
-                            tComparison.addElement(p)
-
-            pdfpath = pdfpath + '.pdf-pair'
-            pdfPathInDoc = lpath + pdfpath
-            for (grade, viewType) in zip(reversed(grades), viewTypes):   # we do not show the PPOI value
+            # Add link only once
+            linkAdded = False
+            for grade in reversed(grades):   # we do not show the PPOI value
                 if max(grades) > 1:
                     tc = TableCell(valuetype="float", value=str(grade), stylename='C'+str(int(grade))+'style')
                 else:
@@ -538,50 +505,51 @@ def getRsltTable(testType, tdfBugs):
                 tr.addElement(tc)
                 tc = TableCell(stylename="THstyle")
                 tr.addElement(tc)
-                p = P(stylename=tablecontents,text=unicode("",PWENC))
-                if os.path.exists(pdfpath + '-' + viewType + '.pdf'):
-                    link = A(type="simple",href=pdfPathInDoc+"-%s.pdf"%viewType, text=">")
+                p = P(stylename="tablecontents")
+
+                if not linkAdded and os.path.exists(pdfPath):
+                    linkAdded = True
+                    link = A(type="simple",href='../' + pdfPath, text=">")
                     p.addElement(link)
                     tc.addElement(p)
                     if checkOdf:
-                        if viewType == 'l':
-                            pComparison = P(stylename=tablecontents,text=unicode("",PWENC))
-                            linkComparison = A(type="simple",href=pdfPathInDoc+"-l.pdf", text=">")
-                            pComparison.addElement(linkComparison)
-                            tComparison.addElement(pComparison)
+                        pComparison = P(stylename="tablecontents")
+                        linkComparison = A(type="simple",href='../' + pdfPath, text=">")
+                        pComparison.addElement(linkComparison)
+                        tComparison.addElement(pComparison)
 
             tc = TableCell(stylename="THstyle")
 
-            sumall = sum(valToGrade(values[testcase][a][1:]))
+            sumall = sum(valToGrade(results[testType][a]['tests'][testcase][1:]))
             if grades == [7,7,7,7]:
-                p = P(stylename=tablecontents,text=unicode("timeout",PWENC))
-                if testType == "roundtrip":
+                p = P(stylename="tablecontents",text="timeout")
+                if testType == "export":
                     gradesPrint = valToGrade(values[testcase][a.replace(testType, 'print')][1:])
                     if gradesPrint != [7,7,7,7]:
-                        p = P(stylename=tablecontents,text=unicode("corrupted",PWENC))
+                        p = P(stylename="tablecontents",text="corrupted")
             elif grades == [6,6,6,6]:
-                p = P(stylename=tablecontents,text=unicode("empty",PWENC))
+                p = P(stylename="tablecontents",text="empty")
             elif sumall <= 8:
-                if testType == "print":
+                if testType == "import":
                     goodDocuments.append(testcase)
-                    p = P(stylename=tablecontents,text=unicode("good import",PWENC))
-                elif testType == "roundtrip":
+                    p = P(stylename="tablecontents",text="good import")
+                elif testType == "export":
                     if testcase in goodDocuments:
-                        p = P(stylename=tablecontents,text=unicode("good import, good export",PWENC))
+                        p = P(stylename="tablecontents",text="good import, good export")
                     elif testcase in badDocuments:
-                        p = P(stylename=tablecontents,text=unicode("bad import, good export",PWENC))
+                        p = P(stylename="tablecontents",text="bad import, good export")
             elif sumall <= 20:
-                if testType == "roundtrip":
+                if testType == "export":
                     if testcase in goodDocuments:
-                        p = P(stylename=tablecontents,text=unicode("good import, bad export",PWENC))
+                        p = P(stylename="tablecontents",text="good import, bad export")
                         badDocuments.append(testcase)
                     elif testcase in badDocuments:
-                        p = P(stylename=tablecontents,text=unicode("bad import, bad export",PWENC))
-                elif testType == "print":
+                        p = P(stylename="tablecontents",text="bad import, bad export")
+                elif testType == "import":
                     badDocuments.append(testcase)
-                    p = P(stylename=tablecontents,text=unicode("bad import",PWENC))
+                    p = P(stylename="tablecontents",text="bad import")
             else:
-                p = P(stylename=tablecontents,text=unicode("",PWENC))
+                p = P(stylename="tablecontents",text="")
 
             tc.addElement(p)
             tr.addElement(tc)
@@ -594,60 +562,51 @@ def getRsltTable(testType, tdfBugs):
     table.addElement(tr)
     tc = TableCell()
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Total compared bugs: %s"%str(total),PWENC))
+    p = P(stylename="tablecontents",text="Total compared bugs: " + str(total))
     tc.addElement(p)
 
     tr = TableRow()
     table.addElement(tr)
     tc = TableCell()
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Total number of regressions: %s"%str(totalRegressions),PWENC))
+    p = P(stylename="tablecontents",text="Total number of regressions: " + str(totalRegressions))
     tc.addElement(p)
 
     tr = TableRow()
     table.addElement(tr)
     tc = TableCell()
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Total number of empty files: %s"%str(totalEmpty),PWENC))
+    p = P(stylename="tablecontents",text="Total number of empty files: " + str(totalEmpty))
     tc.addElement(p)
 
     tr = TableRow()
     table.addElement(tr)
     tc = TableCell()
     tr.addElement(tc)
-    p = P(stylename=tablecontents,text=unicode("Total number of Timeouts: %s"%str(totalTimeOut),PWENC))
+    p = P(stylename="tablecontents",text="Total number of Timeouts: " + str(totalTimeOut))
     tc.addElement(p)
 
     return table
 
 if __name__ == "__main__":
-    ifNameNew = ""
-    ifNameOld = ""
-    ofname = "rslt.ods"
+    if not os.getcwd().endswith('office-interoperability-tools'):
+        print('ERROR: call this script from office-interoperability-tools root directory')
+        sys.exit(1)
+
+    oldPath = ""
+    newPath = ""
+    ofname = ""
     checkRegressions = False
     checkImprovements = False
     checkOdf = False
 
-    lpath = '../'
-
     parsecmd()
 
-    if lpath[-1] != '/':
-        lpath = lpath+'/'
-
-    results = loadResults(ifNameNew, ifNameOld)
+    results = loadResults(oldPath, newPath)
 
     tdfBugs = None
     if checkImprovements:
         tdfBugs = check_tdf_bugs(results['import']['new'])
-
-    if not checkOdf:
-        result = defaultdict(dict)
-        for d in values, values2:
-            for k, v in d.iteritems():
-                result[k].update(v)
-
-        values = result
 
     textdoc = create_doc_with_styles()
 
@@ -655,10 +614,10 @@ if __name__ == "__main__":
     badDocuments = []
     lImportReg = []
     lExportReg = []
-    table = getRsltTable("print", tdfBugs)
-    textdoc.spreadsheet.addElement(table)
-    table = getRsltTable("roundtrip", tdfBugs)
-    textdoc.spreadsheet.addElement(table)
+    importTable = getRsltTable("import", results, tdfBugs)
+    textdoc.spreadsheet.addElement(importTable)
+    exportTable = getRsltTable("export", results, tdfBugs)
+    textdoc.spreadsheet.addElement(exportTable)
 
     textdoc.save(ofname)
 
