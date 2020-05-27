@@ -364,7 +364,7 @@ def getRsltTable(testType, results, tdfBugs):
     totalRegressions = 0
     totalEmpty = 0
     totalTimeOut = 0
-    for testcase in results[testType]['new']['tests'].keys():
+    for testcase in sorted(results[testType]['new']['tests'].keys()):
         try:
             agrades = np.array([valToGrade(results[testType][a]['tests'][testcase][1:]) for a in targetAppsSel])
             if np.array_equal(agrades[0], [8,8,8,8]):
