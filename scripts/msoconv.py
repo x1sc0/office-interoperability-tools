@@ -19,7 +19,6 @@ from subprocess import Popen, PIPE, DEVNULL
 import signal
 import string
 import random
-import multiprocessing
 import shutil
 import time
 
@@ -105,8 +104,7 @@ if __name__ == "__main__":
                 listFiles.append(fileName)
 
     if listFiles:
-        cpuCount = multiprocessing.cpu_count()
-        chunkSplit = cpuCount * 8
+        chunkSplit = 64
         count = 0
         total_count = len(listFiles)
 
@@ -114,13 +112,8 @@ if __name__ == "__main__":
         for chunk in chunks:
             kill_mso(arguments.wineprefix)
 
-            pool = multiprocessing.Pool(cpuCount)
             for fileName in chunk:
                 count += 1
-                pool.apply_async(launch_OfficeConverter, args=(fileName, arguments, count, total_count))
-
-            pool.close()
-            pool.join()
-
+                launch_OfficeConverter(fileName, arguments, count, total_count)
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab:
