@@ -203,10 +203,11 @@ def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, co
                 shutil.copyfile(failedPdfPath, importNamePath)
 
             for extension in config.config[arguments.type][arguments.component]["export"]:
-                exportNamePath = os.path.join(outputPath, ".".join([i, extension, "pdf"]) )
+                missingNamePath = os.path.join(outputPath, ".".join([i, extension]) )
 
-                if not os.path.exists(exportNamePath):
-                    logger.info(exportNamePath + " doesn't exists. Using failed.pdf")
+                if not os.path.exists(missingNamePath):
+                    exportNamePath = missingNamePath + '.pdf'
+                    logger.info(missingNamePath + " doesn't exists. Using failed.pdf")
                     shutil.copyfile(failedPdfPath, exportNamePath)
 
     if testName:
@@ -254,12 +255,13 @@ def execute(arguments, isTest):
 
     convert_input_with_libreOffice(scriptsPath, inputPath, outputPath, typeName, componentName, isTest)
 
+    replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, componentName, isTest)
+
     if typeName == 'ooxml':
         convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentName, isTest)
         convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, isTest)
 
     #remove_non_pdf_files(outputPath, typeName, componentName, isTest)
-    replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, componentName, isTest)
     compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName, isTest)
 
     if isTest:
