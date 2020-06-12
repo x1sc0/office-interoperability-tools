@@ -174,19 +174,6 @@ def convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, testN
         for extension in config.config["ooxml"][componentName]["export"]:
             assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf']))))
 
-def remove_non_pdf_files(outputPath, typeName, componentName, testName):
-    for fileName in os.listdir(outputPath):
-        for extension in config.config[typeName][componentName]["export"]:
-            ext = os.path.splitext(fileName)[1][1:]
-            if ext == extension:
-                logger.info("Removing " + os.path.join(outputPath, fileName))
-                os.remove(os.path.join(outputPath, fileName))
-
-    if testName:
-        for extension in config.config[typeName][componentName]["export"]:
-            assert(not os.path.exists(os.path.join(outputPath, '.'.join([testName, extension]))))
-            assert(os.path.exists(os.path.join(outputPath, '.'.join([testName, extension, 'pdf']))))
-
 def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, componentName, testName):
 
     if testName:
@@ -261,7 +248,6 @@ def execute(arguments, isTest):
         convert_reference_with_mso(scriptsPath, inputPath, referencePath, componentName, isTest)
         convert_output_to_pdf_with_mso(scriptsPath, outputPath, componentName, isTest)
 
-    #remove_non_pdf_files(outputPath, typeName, componentName, isTest)
     compare_pdfs(scriptsPath, outputPath, referencePath, typeName, componentName, isTest)
 
     if isTest:
