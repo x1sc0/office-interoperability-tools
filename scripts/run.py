@@ -218,7 +218,7 @@ def execute(arguments, isTest):
     componentName = arguments.component
 
     if isTest:
-        inputPath = os.path.join( scriptsPath, "tests")
+        inputPath = os.path.join( scriptsPath, "tests", componentName)
         outputPath = "/tmp/test-output/"
         referencePath = "/tmp/test-reference/"
 
