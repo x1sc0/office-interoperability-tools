@@ -183,13 +183,16 @@ def replace_non_converted_files(scriptsPath, inputPath, outputPath, typeName, co
 
     failedPdfPath = os.path.join(scriptsPath, 'failed.pdf')
     for i in os.listdir(inputPath):
-        if not i.startswith(".~lock."):
+        importExtensions = config.config[typeName][componentName]["import"]
+        ext = os.path.splitext(i)[1][1:]
+
+        if not i.startswith(".~lock.") and ext in importExtensions:
             importNamePath = os.path.join(outputPath, i + ".import.pdf")
             if not os.path.exists(importNamePath):
                 logger.info(importNamePath + " doesn't exists. Using failed.pdf")
                 shutil.copyfile(failedPdfPath, importNamePath)
 
-            for extension in config.config[arguments.type][arguments.component]["export"]:
+            for extension in config.config[typeName][componentName]["export"]:
                 missingNamePath = os.path.join(outputPath, ".".join([i, extension]) )
 
                 if not os.path.exists(missingNamePath):
