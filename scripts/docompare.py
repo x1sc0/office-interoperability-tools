@@ -27,6 +27,7 @@ from scipy import ndimage
 import parser
 from subprocess import Popen, DEVNULL
 from contextlib import contextmanager
+from multiprocessing import Process
 import time
 import signal
 
@@ -44,6 +45,11 @@ def tmpname():
     f = tempfile.NamedTemporaryFile(delete=True)
     f.close()
     return f.name
+
+def clean_tmpfiles():
+    for fileName in os.listdir('/tmp'):
+        if fileName.endswith('.tif'):
+            os.remove('/tmp/' + fileName)
 
 def toBin(img, thr=200):
     #return (img < thr).astype(np.uint8)
@@ -643,8 +649,12 @@ if __name__=="__main__":
 
         for i in range(totalCount):
             count += 1
-            try:
-                mainfunc( listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount)
-            except Exception as e:
-                print(e)
+
+            clean_tmpfiles()
+
+            proc = Process(
+                    target=mainfunc,
+                    args=(listFiles[i][0], listFiles[i][1], listFiles[i][2], i + 1, totalCount))
+            proc.start()
+            proc.join()
 
