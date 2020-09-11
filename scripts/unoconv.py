@@ -317,11 +317,11 @@ def exportDoc(xDoc, fileName, filterName, connection, timer):
         xDoc.storeToURL(fileURL, saveProps)
     except pyuno.getClass("com.sun.star.beans.UnknownPropertyException"):
         if t.is_alive():
-            writeExportCrash(filename)
+            writeExportCrash(fileName)
         raise # means crashed, handle it later
     except pyuno.getClass("com.sun.star.lang.DisposedException"):
         if t.is_alive():
-            writeExportCrash(filename)
+            writeExportCrash(fileName)
         raise # means crashed, handle it later
     except pyuno.getClass("com.sun.star.lang.IllegalArgumentException"):
         pass # means could not open the file, ignore it
